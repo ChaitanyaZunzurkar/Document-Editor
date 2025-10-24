@@ -1,6 +1,15 @@
 'use client'
 
 import { useEditor, EditorContent } from '@tiptap/react'
+import TaskList from '@tiptap/extension-task-list'
+import TaskItem from '@tiptap/extension-task-item'
+import Heading from '@tiptap/extension-heading'
+import Table from '@tiptap/extension-table'
+import TableRow from '@tiptap/extension-table-row';
+import TableCell from '@tiptap/extension-table-cell';
+import TableHeader from '@tiptap/extension-table-header';
+import Image from '@tiptap/extension-image'
+import ImageResize from 'tiptap-extension-resize-image';
 import StarterKit from '@tiptap/starter-kit'
 
 export const Editor = () => {
@@ -11,8 +20,42 @@ export const Editor = () => {
                 class: 'focus:outline-none print:border-0 bg-white border border-[#C7C7C7] flex flex-col min-h-[1054px] w-[816px] pt-10 pr-14 cursor-text'
             }
         },
-        extensions: [StarterKit],
-        content: `<p>Chaitanya Zunzurkar</p>`,
+        extensions: [
+            StarterKit,
+            TaskList,
+            TaskItem.configure({
+                nested: true,
+            }),
+            Heading.configure({
+                levels: [1,2,3,4,5,6],
+            }),
+            Table.configure({
+                resizable: true
+            }),
+            TableRow,
+            TableCell,
+            TableHeader,
+            Image,
+            ImageResize.configure({
+                inline: true,
+            })
+        ],
+        content: `
+        <table>
+          <tbody>
+            <tr>
+              <th>Name</th>
+              <th colspan="3">Description</th>
+            </tr>
+            <tr>
+              <td>Cyndi Lauper</td>
+              <td>Singer</td>
+              <td>Songwriter</td>
+              <td>Actress</td>
+            </tr>
+          </tbody>
+        </table>
+      `,
         immediatelyRender: false
     })
 
