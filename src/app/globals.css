@@ -103,6 +103,16 @@ body {
     margin: 1.25rem 1rem 1.25rem 0.4rem; 
   }
 
+  /* Link styles */
+  a {
+    @apply text-blue-600;
+    cursor: pointer;
+
+    &:hover {
+      @apply underline;
+    }
+  }
+
   ul li {
     list-style-type: disc;
     p {
