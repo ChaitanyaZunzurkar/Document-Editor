@@ -48,6 +48,41 @@ export const Navbar = () => {
         .run()
     }
 
+    const onDownload = (blob: Blob, filename: string) => {
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement("a")
+        a.href= url;
+        a.download = filename
+        a.click()
+    }
+
+    const onSaveJson = () => {
+        if(!editor) return;
+        const content = editor.getJSON();
+        const blob = new Blob([JSON.stringify(content)], {
+            type: "application/json",
+        });
+        onDownload(blob, 'document.json')
+    }
+
+    const onSaveHTML = () => {
+        if(!editor) return;
+        const content = editor.getHTML();
+        const blob = new Blob([JSON.stringify(content)], {
+            type: "text/html",
+        });
+        onDownload(blob, 'document.html')
+    }
+
+    const onSaveText = () => {
+        if(!editor) return;
+        const content = editor.getText();
+        const blob = new Blob([JSON.stringify(content)], {
+            type: "text/plain",
+        });
+        onDownload(blob, 'document.txt')
+    }
+
     return (
         <nav className="flex items-center justify-between px-4 py-2 bg-[#F9FBFD]">
             <div className="flex gap-2 items-center">
@@ -69,19 +104,19 @@ export const Navbar = () => {
                                             Save
                                         </MenubarSubTrigger>
                                         <MenubarSubContent>
-                                            <MenubarItem>
+                                            <MenubarItem onClick={() => window.print()}>
                                                 <BsFilePdf className="size-4 mr-2" />
                                                 PDF (.pdf)
                                             </MenubarItem>
-                                            <MenubarItem>
+                                            <MenubarItem onClick={onSaveJson}>
                                                 <FileJsonIcon className="size-4 mr-2" />
                                                 JSON (.json)
                                             </MenubarItem>
-                                            <MenubarItem>
+                                            <MenubarItem onClick={onSaveHTML}>
                                                 <GlobeIcon className="size-4 mr-2" />
                                                 HTML (.html)
                                             </MenubarItem>
-                                            <MenubarItem>
+                                            <MenubarItem onClick={onSaveText}>
                                                 <FileTextIcon className="size-4 mr-2" />
                                                 TEXT 
                                             </MenubarItem>
