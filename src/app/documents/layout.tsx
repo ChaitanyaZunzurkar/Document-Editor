@@ -1,15 +1,9 @@
 interface DocumentNode {
-    children : Readonly<React.ReactNode>
+  children: React.ReactNode
 }
 
-const DocumentLayout = ({children} : DocumentNode) => {
-    return ( 
-        <html>
-            <body>
-                {children}
-            </body>
-        </html>
-     );
+const DocumentLayout = ({ children }: DocumentNode) => {
+  return <>{children}</>
 }
- 
-export default DocumentLayout;
+
+export default DocumentLayout
