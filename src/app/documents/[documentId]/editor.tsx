@@ -19,6 +19,7 @@ import Image from '@tiptap/extension-image'
 import ImageResize from 'tiptap-extension-resize-image';
 import StarterKit from '@tiptap/starter-kit'
 import { useEditorStore } from '@/store/use-editor-store'
+import { LineHeightExtension } from '@/extensions/list-height'
 
 // Custom extension for font-size
 import { FontSizeExtension } from '@/extensions/font-size'
@@ -60,6 +61,10 @@ export const Editor = () => {
         extensions: [
             StarterKit,
             FontSizeExtension,
+            LineHeightExtension.configure({
+                types: ["heading", "paragraph"],
+                defaultLineHeight: "normal"
+            }),
             TextAlign.configure({
                 types: ["heading", "paragraph"]
             }),
@@ -84,7 +89,7 @@ export const Editor = () => {
                 multicolor: true
             }),
             Link.configure({
-                openOnClick: false,
+                openOnClick: true,
                 autolink: true,
                 defaultProtocol: "https"
             }),

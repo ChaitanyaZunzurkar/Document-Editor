@@ -1,6 +1,6 @@
 "use client";
 
-import { LucideIcon, Undo2Icon , Redo2Icon, Printer, PrinterIcon, SpellCheckIcon, BoldIcon, ItalicIcon, UnderlineIcon, MessageSquarePlusIcon, ListTodoIcon, RemoveFormattingIcon, ChevronDownIcon, HighlighterIcon, Link2Icon, ImageIcon, UploadIcon, SearchIcon, AlignLeftIcon, AlignCenter, AlignCenterIcon, AlignRightIcon, AlignJustifyIcon, ListIcon, ListOrdered, ListOrderedIcon, MinusIcon, PlusIcon } from "lucide-react";
+import { LucideIcon, Undo2Icon , Redo2Icon, Printer, PrinterIcon, SpellCheckIcon, BoldIcon, ItalicIcon, UnderlineIcon, MessageSquarePlusIcon, ListTodoIcon, RemoveFormattingIcon, ChevronDownIcon, HighlighterIcon, Link2Icon, ImageIcon, UploadIcon, SearchIcon, AlignLeftIcon, AlignCenter, AlignCenterIcon, AlignRightIcon, AlignJustifyIcon, ListIcon, ListOrdered, ListOrderedIcon, MinusIcon, PlusIcon, ListCollapseIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useEditorStore } from "@/store/use-editor-store";
 import { Separator } from "@/components/ui/separator";
@@ -16,6 +16,7 @@ import { type ColorResult, SketchPicker } from "react-color"
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+
 import {
     Dialog,
     DialogContent,
@@ -43,7 +44,6 @@ const ImageButton = () => {
             if(file) {
                 const imgUrl = URL.createObjectURL(file);
                 onChange(imgUrl);
-                URL.revokeObjectURL(imgUrl);
             }
         }
 
@@ -334,7 +334,7 @@ const HeadingLevelButton = () => {
         <DropdownMenu>
             <DropdownMenuTrigger asChild> 
                 <button className="h-7 min-w-7 shrink-0 flex items-center justify-center rounded-sm hover:bg-neutral-200/80 px-1.5 overflow-hidden text-sm">
-                    <span className="truncate">
+                    <span className="truncate flex justify-between">
                         {getCurrentHeading()}
                         <ChevronDownIcon className="ml-2 size-4 shrink-0" />
                     </span>
@@ -396,8 +396,8 @@ const FontFamilyButton = () => {
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <button className="h-7 w-[120px] shrink-0 flex items-center justify-between rounded-sm hover:bg-neutral-200/80 px-1.5 overflow-hidden text-sm">
-                    <span className="truncate">
+                <button className="h-7 w-[100px] shrink-0 flex items-center justify-between rounded-sm hover:bg-neutral-200/80 px-1.5 overflow-hidden text-sm ">
+                    <span className="truncate flex w-[100%] justify-between">
                         { editor?.getAttributes("textStyle").fontFamily || "Arial" }
                         <ChevronDownIcon className="ml-2 size-4 shrink-0" />
                     </span>
@@ -551,6 +551,51 @@ export const FontSizeButton = () => {
   )
 }
 
+export const LineHeightButton = () => {
+    const { editor } = useEditorStore();
+
+    const lineHeights = [
+        { label: 'Default', value: 'normal' },
+        { label: 'Single', value: '1' },
+        { label: '1.15', value: '1.15' },
+        { label: '1.5', value: '1.5' },
+        { label: 'Double', value: '2' },
+    ];
+
+    return (
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <button className="h-7 min-w-7 shrink-0 flex flex-col items-center justify-center rounded-sm hover:bg-neutral-200/80 px-1.5 overflow-hidden text-sm">
+                    <ListCollapseIcon className="size-4" />
+                </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="p-1 flex flex-col gap-y-1">
+                {
+                    lineHeights.map(({ label, value }) => (
+                        <button
+                            key={value}
+                            onClick={() => {
+                                if (value === 'normal') {
+                                    editor?.chain().focus().unsetLineHeight().run();
+                                } else {
+                                    editor?.chain().focus().setLineHeight(value).run();
+                                }
+                            }}
+                            className={cn(
+                                "flex items-center gap-x-2 px-2 py-2 rounded-sm hover:bg-neutral-200/80",
+                                editor?.getAttributes("paragraph").lineHeight === value && "bg-neutral-200/80",
+                                editor?.getAttributes("heading").lineHeight === value && "bg-neutral-200/80"
+                            )}
+                        >
+                            <span className="text-sm">{label}</span>
+                        </button>
+                    ))
+                }
+            </DropdownMenuContent>
+        </DropdownMenu>
+    )
+}
+
 
 export const Toolbar = () => {
     const { editor } = useEditorStore();
@@ -611,7 +656,7 @@ export const Toolbar = () => {
             {
                 label: "Comment",
                 icon: MessageSquarePlusIcon,
-                onClick: () => console.log("Commnet"),
+                onClick: () => console.log("Comment"),
                 isActive: false,
             },
             {
@@ -640,15 +685,15 @@ export const Toolbar = () => {
 
             <FontFamilyButton />
 
-             <Separator orientation="vertical" className="h-6 bg-neutral-300" />
+            <Separator orientation="vertical" className="h-6 bg-neutral-300" />
             
             <HeadingLevelButton />
 
-             <Separator orientation="vertical" className="h-6 bg-neutral-300" />
+            <Separator orientation="vertical" className="h-6 bg-neutral-300" />
             
             <FontSizeButton />
 
-             <Separator orientation="vertical" className="h-6 bg-neutral-300" />
+            <Separator orientation="vertical" className="h-6 bg-neutral-300" />
             {
                 sections[1].map((item) => (
                     <ToolbarButton key={item.label} {...item} />
@@ -667,9 +712,7 @@ export const Toolbar = () => {
 
             <AlignButton />
 
-            {
-                // lineheight
-            }
+            <LineHeightButton />
 
             <ListButton />
             {

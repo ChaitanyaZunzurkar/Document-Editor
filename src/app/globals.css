@@ -99,8 +99,43 @@ body {
 .tiptap { 
   /* List Styling */
   ul, ol {
-    padding: 0.1rem;
-    margin: 1.25rem 1rem 1.25rem 0.4rem; 
+    padding-left: 2.5rem !important; 
+    margin: 1.25rem 0 !important;
+    list-style-position: outside;
+  }
+
+  ul li {
+    list-style-type: disc !important;
+    display: list-item !important;
+  }
+
+  ol li {
+    list-style-type: decimal !important;
+    display: list-item !important;
+  }
+
+  li p {
+    margin: 0 !important;
+    display: inline; 
+  }
+
+  ul ul, 
+  ul ol, 
+  ol ul, 
+  ol ol {
+    margin-top: 0.25rem !important;
+    margin-bottom: 0 !important;
+    /* This creates the visual "staircase" effect for sublists */
+    padding-left: 1.5rem !important; 
+  }
+
+  /* Optional: Change bullet style for sublists (like Google Docs) */
+  ul ul li {
+    list-style-type: circle !important;
+  }
+  
+  ul ul ul li {
+    list-style-type: square !important;
   }
 
   /* Link styles */
