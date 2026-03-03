@@ -63,11 +63,11 @@ export const Ruler = () => {
   return (
     <div 
       ref={rulerRef}
-      className="h-6 border-b border-gray-300 flex items-end relative select-none print:hidden bg-[#F9FBFD]"
+      className="w-[816px] mx-auto h-6 border-b border-gray-300 flex items-end relative select-none print:hidden bg-[#F9FBFD]"
     >
       <div 
         id="ruler-container"
-        className="max-w-[816px] w-full h-full mx-auto relative"
+        className="w-full h-full relative"
       >
         <div className="absolute inset-x-0 bottom-0 h-full">
           <div className="relative w-[816px] h-full">
