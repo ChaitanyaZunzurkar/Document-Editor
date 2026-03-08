@@ -36,7 +36,7 @@ export const SearchInput = () => {
                     value={value}
                     onChange={handleChange}
                     ref={inputRef}
-                    className="block w-full pl-12 pr-10 py-2.5 bg-[#F1F3F4] border-transparent focus:bg-white focus:outline-none focus:ring-0 focus:shadow-md transition-all sm:text-sm placeholder-gray-500 text-gray-900 rounded-full"
+                    className="block w-full pl-12 pr-10 py-2.5 bg-[#F1F3F4] border-transparent focus:bg-slate-50 focus:outline-none focus:ring-0 focus:shadow-md transition-all sm:text-sm placeholder-gray-500 text-gray-900 rounded-full"
                 />
 
                 {value && (

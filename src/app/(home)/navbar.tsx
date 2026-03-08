@@ -1,9 +1,7 @@
-"use client"; 
-
 import Link from "next/link";
 import Image from "next/image";
-import { Menu, Settings, Grid2X2, List } from "lucide-react";
 import { SearchInput } from "./search-input";
+import { AuthButton } from "@/components/ui/auth-button";
 
 export const Navbar = () => {
   return (
@@ -17,30 +15,11 @@ export const Navbar = () => {
         </Link>
       </div>
 
-      {/* <button className="p-2 rounded-full hover:bg-gray-100 transition-colors">
-          <Menu className="w-6 h-6 text-[#5F6368]" />
-      </button> */}
-
       {/* Search Bar */}
       <SearchInput />
       
-      {/* User Actions */}
-      <div className="flex items-center gap-2">
-        <div className="flex items-center mr-4">
-           {/* You can toggle these based on state */}
-           <button className="p-2 rounded-full hover:bg-gray-100 hidden md:block">
-            <Grid2X2 className="w-5 h-5 text-[#5F6368]" />
-          </button>
-        </div>
-        
-        <button className="p-2 rounded-full hover:bg-gray-100">
-          <Settings className="w-5 h-5 text-[#5F6368]" />
-        </button>
-
-        <div className="ml-2 h-9 w-9 rounded-full bg-indigo-600 flex items-center justify-center text-white text-sm font-semibold cursor-pointer border border-transparent hover:border-indigo-200 transition-all">
-          JD
-        </div>
-      </div>
+      { /* Sign In Button */}
+      <AuthButton />
     </nav>
   );
 };

@@ -1,5 +1,3 @@
-"use client"; 
-
 import { Navbar } from "./navbar"
 import { TemplateGallery } from "./TemplateGallery"
 
