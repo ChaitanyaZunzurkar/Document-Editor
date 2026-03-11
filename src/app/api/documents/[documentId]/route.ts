@@ -20,7 +20,10 @@ export async function PATCH(
             id: documentId,
             ownerId: session?.user?.id
         },
-        data: { title, content: content }
+        data: { 
+            title, 
+            content: content ? Buffer.from(content, "utf-8") : undefined,
+        }
     })
 
     return NextResponse.json(document)

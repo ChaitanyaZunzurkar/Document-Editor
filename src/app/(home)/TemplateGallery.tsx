@@ -7,13 +7,36 @@ import {
     CarouselNext,
     CarouselPrevious,
 } from "@/components/ui/carousel"
+import { useRouter } from "next/navigation"; 
+import { useTransition } from "react";
 import { templates } from "@/constants/template";
 import { cn } from "@/lib/utils"
+import { createDocument } from "@/lib/services/documents";
+import { FullScreenLoader } from "@/components/ui/full-screen-loader";
+import { Loader2Icon } from "lucide-react";
 
 export const TemplateGallery = () => {
-   const isCreating = false;
-   
-   return (
+    const router = useRouter();
+    const [isCreating, startTransition] = useTransition();
+
+    const onCreate = (label: string) => {
+        startTransition(async () => {
+            try {
+                const newDocs = await createDocument(label);
+                router.refresh();
+
+                router.push(`/documents/${newDocs.id}`)
+            } catch (error) {
+
+            }
+        })
+    }
+
+    if (isCreating) {
+        return <FullScreenLoader label="Creating document..." />;
+    }
+    
+    return (
     <div className="bg-[#F1F3F4]">
         <div className="max-w-screen-xl mx-auto px-16 py-6 flex flex-col gap-y-4">
             <h3 className="text-base font-medium">
@@ -34,7 +57,7 @@ export const TemplateGallery = () => {
                             >
                                 <button
                                     disabled={isCreating}
-                                    onClick={() => {}}
+                                    onClick={() => onCreate(template.label)}
                                     style={{
                                         backgroundImage: `url(${template.imageUrl})`,
                                         backgroundSize: "cover",
@@ -42,7 +65,11 @@ export const TemplateGallery = () => {
                                         backgroundRepeat: "no-repeat"
                                     }}
                                     className="size-full hover:border-blue-500 rounded-sm hover:bg-blue-50 transition flex flex-col items-center justify-center gap-y-4 bg-white"
-                                />
+                                >
+                                    {isCreating && (
+                                        <Loader2Icon className="size-6 text-blue-600 animate-spin" />
+                                    )}
+                                </button>
                                 <p className="text-sm font-medium truncate flex items-center justify-center">
                                     {template.label}
                                 </p>
