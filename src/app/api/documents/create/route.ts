@@ -20,6 +20,10 @@ export async function GET(req: NextRequest) {
         orderBy: {
             updatedAt: "desc"
         },
+        include: {
+            owner: true,        
+            collaborators: true 
+        },
         take: take,
         skip: skip
     })
