@@ -57,3 +57,16 @@ export const updateDocument = async(id: string, title: string) => {
 
     return await res.json()
 }
+
+export const searchDocument = async(title: string) => {
+    const res = await fetch(`/api/documents/search/?title=${encodeURIComponent(title)}`, {
+        method: "GET",
+    })
+
+    if(!res.ok) {
+        const error = await res.json().catch(() => ({}));
+        throw new Error(error.message || "Failed to search documents.")
+    }
+
+    return await res.json()
+}
