@@ -58,15 +58,51 @@ export const updateDocument = async(id: string, title: string) => {
     return await res.json()
 }
 
-export const searchDocument = async(title: string) => {
-    const res = await fetch(`/api/documents/search/?title=${encodeURIComponent(title)}`, {
-        method: "GET",
-    })
+export const addCollaborator = async (
+    documentId: string, 
+    emails: string[], 
+    role: string = "VIEWER"
+) => {
+    try {
+        const response = await fetch("/api/documents/collaborators/add", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                documentId,
+                emails,
+                role,
+            }),
+        });
 
-    if(!res.ok) {
-        const error = await res.json().catch(() => ({}));
-        throw new Error(error.message || "Failed to search documents.")
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.message || "Failed to add collaborators");
+        }
+
+        return data; 
+    } catch (error) {
+        console.error("Fail to add collaborator", error);
+        throw error;
     }
+};
 
-    return await res.json()
-}
+export const getDocumentById = async (id: string) => {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/documents/${id}`, {
+        method: "GET",
+        cache: "no-store"
+    });
+    if (!res.ok) throw new Error("Failed to fetch document");
+    return await res.json();
+};
+
+export const searchDocument = async (query: string) => {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/documents/search?q=${encodeURIComponent(query)}`, {
+        method: "GET",
+        cache: "no-store"
+    });
+    if (!res.ok) throw new Error("Failed to search documents");
+    return await res.json();
+};

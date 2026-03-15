@@ -1,21 +1,27 @@
-"use client";
-
 import { Editor } from './editor'
 import { Navbar } from './navbar'
 import { Toolbar } from './Toolbar'
+import { redirect } from "next/navigation";
+import { getDocumentByIdServer } from '@/lib/services/documents.server';
 
 interface DocumentIdProps {
   params: Promise<{ documentId: string }>;
 }
 
 const DocumentPage = async ({ params }: DocumentIdProps) => {
-  // Destructure the documentId from params
   const { documentId } = await params;
+
+  const document = await getDocumentByIdServer(documentId);
+  console.log(document)
+
+  if (!document) {
+    redirect("/");
+  }
 
   return (
     <div className="min-h-screen bg-[#FAFBFD]">
       <div className="flex flex-col fixed top-0 left-0 right-0 z-10 bg-[#FAFBFD] print:hidden">
-        <Navbar />
+        <Navbar initialData={document} />
         <Toolbar />
       </div>
 

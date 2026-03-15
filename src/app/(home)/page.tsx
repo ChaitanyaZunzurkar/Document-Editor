@@ -30,11 +30,10 @@ async function getInitialDocuments(userId: string) {
 
 const Home = async () => {
   const session = await auth();
-  if (!session?.user?.id) {
-    redirect("/api/auth/sign-in"); 
-  }
 
-  const initialDocuments = await getInitialDocuments(session?.user?.id); 
+  const initialDocuments = session?.user?.id 
+  ? await getInitialDocuments(session.user.id) 
+  : [];
 
   return (
     <div className="flex flex-col min-h-screen">

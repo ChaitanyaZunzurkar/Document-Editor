@@ -36,9 +36,11 @@ import {
 } from '@/components/ui/menubar'
 import { BsFilePdf } from "react-icons/bs"
 import { useEditorStore } from "@/store/use-editor-store"
+import { AddCollaborators } from "@/components/ui/add-collaborators"
 
-export const Navbar = () => {
+export const Navbar = ({ initialData }: { initialData: any }) => {
     const { editor } = useEditorStore();
+    if (!initialData) return null;
 
     const insertTable = ({ rows, cols} : { rows: number, cols: number}) => {
         editor
@@ -229,6 +231,14 @@ export const Navbar = () => {
                         </Menubar>
                     </div>
                 </div>
+            </div>
+
+            <div className="flex items-center gap-x-2">
+                <AddCollaborators 
+                    documentId={initialData.id}
+                    title={initialData.title}
+                    initialCollaborators={initialData.collaborators}
+                />
             </div>
         </nav>
     )
