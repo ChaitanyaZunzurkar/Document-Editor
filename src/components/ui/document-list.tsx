@@ -59,6 +59,7 @@ export const DocumentList = ({ initialDocuments }: DocumentListProps) => {
       const newDocs = await getDocuments(skip, 10);
       if (newDocs.length < 10) setHasMore(false);
       setDocuments((prev) => [...prev, ...newDocs]);
+      console.log(documents)
       setSkip((prev) => prev + 10);
     } catch (error) {
       console.error("Failed to load more documents", error);
@@ -128,6 +129,7 @@ export const DocumentList = ({ initialDocuments }: DocumentListProps) => {
                         <SiGoogledocs className="size-5 text-blue-500 flex-shrink-0" />
                       )}
                       <span className="truncate">{doc.title}</span>
+                      {/* {console.log(doc.title, doc)} */}
                       {doc.collaborators?.length > 0 ? (
                         <Users2 className="size-4 text-muted-foreground flex-shrink-0" />
                       ) : (

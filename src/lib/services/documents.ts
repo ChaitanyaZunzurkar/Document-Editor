@@ -16,7 +16,7 @@ export const createDocument = async (title: string = "Untitled Document") => {
 }
 
 export const getDocuments = async (skip: number = 0, take: number = 10) => {
-    const res = await fetch(`/api/documents/?skip=${skip}&take=${take}`, {
+    const res = await fetch(`/api/documents?skip=${skip}&take=${take}`, {
         method: "GET",
     })
 

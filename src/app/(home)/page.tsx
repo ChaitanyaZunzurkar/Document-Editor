@@ -7,7 +7,21 @@ import { redirect } from "next/navigation";
 
 async function getInitialDocuments(userId: string) {
   return await prisma.document.findMany({
-    where: { ownerId: userId },
+    where: {
+      OR: [
+        { ownerId: userId },
+        {
+          collaborators: {
+            some: { userId: userId }
+          }
+        }
+      ],
+    },
+    
+    include: {
+      owner: true,
+      collaborators: true,
+    },
     take: 10,
     skip: 0,
     orderBy: { updatedAt: "desc"}

@@ -15,7 +15,16 @@ export async function GET(req: NextRequest) {
 
     const documents = await prisma.document.findMany({
         where: {
-            ownerId: session?.user?.id,
+            OR: [
+                { ownerId: session.user.id },
+                {
+                    collaborators: {
+                        some: {
+                            userId: session.user.id
+                        }
+                    }
+                }
+            ],
         },
         orderBy: {
             updatedAt: "desc"
