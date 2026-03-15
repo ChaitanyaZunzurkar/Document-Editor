@@ -4,23 +4,25 @@ import { auth } from '@/auth';
 
 export const getDocumentByIdServer = async (id: string) => {
     const session = await auth();
-    
-    console.log("Session user ID:", session?.user?.id);
-    console.log("Document ID:", id);
-    
-    if (!session?.user?.id) {
-        console.log("No session found — returning null");
-        return null;
-    }
+    if (!session?.user?.id) return null;
 
-    const document = await prisma.document.findUnique({
+    return await prisma.document.findFirst({
         where: {
             id,
-            ownerId: session.user.id
+            OR: [
+                { ownerId: session.user.id },       
+                { collaborators: {
+                    some: { userId: session.user.id }
+                }}
+            ]
+        },
+        include: {
+            owner: true,
+            collaborators: {
+                include: {
+                    user: true
+                }
+            }
         }
     });
-
-    console.log("Found document:", document);
-
-    return document;
 };

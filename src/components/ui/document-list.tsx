@@ -133,7 +133,7 @@ export const DocumentList = ({ initialDocuments }: DocumentListProps) => {
                       {doc.collaborators?.length > 0 ? (
                         <Users2 className="size-4 text-muted-foreground flex-shrink-0" />
                       ) : (
-                        <CircleUserIcon className="size-4 text-muted-foreground/30 flex-shrink-0" />
+                        <CircleUserIcon className="size-4 text-muted-foreground flex-shrink-0" />
                       )}
                     </div>
                   </TableCell>

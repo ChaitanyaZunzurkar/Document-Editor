@@ -12,7 +12,6 @@ const DocumentPage = async ({ params }: DocumentIdProps) => {
   const { documentId } = await params;
 
   const document = await getDocumentByIdServer(documentId);
-  console.log(document)
 
   if (!document) {
     redirect("/");

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Globe, Loader2Icon, ShieldCheck } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -29,6 +29,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { addCollaborator } from "@/lib/services/documents"; 
 
 interface User {
+    id: string;
     name: string | null;
     email: string | null;
 }
@@ -37,18 +38,21 @@ interface Collaborator {
     id: string;
     role: string;
     user: User;
+    userId: string;
 }
 
 interface AddCollaboratorsProps {
   documentId: string;
   title: string;
   initialCollaborators: Collaborator[];
+  ownerId: string;
 }
 
 export const AddCollaborators = ({ 
     documentId, 
     title, 
-    initialCollaborators 
+    initialCollaborators,
+    ownerId
 }: AddCollaboratorsProps) => {
   const [inputValue, setInputValue] = useState("");
   const [role, setRole] = useState("VIEWER"); 
@@ -77,6 +81,10 @@ export const AddCollaborators = ({
       setIsSubmitting(false);
     }
   };
+
+  useEffect(() => {
+    setCollaborators(initialCollaborators);
+  }, [initialCollaborators]);
 
   return (
     <Dialog>
@@ -157,7 +165,7 @@ export const AddCollaborators = ({
                     </div>
                     <div className="flex items-center gap-x-2 text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-md uppercase tracking-tighter">
                       <ShieldCheck className="size-3" />
-                      {c.role}
+                      {c.userId === ownerId ? "OWNER" : c.role}
                     </div>
                   </div>
                 ))}

@@ -6,50 +6,46 @@ export async function GET(
   req: Request,
   { params }: { params: Promise<{ documentId: string }> } 
 ) {
-  const session = await auth();
+  try {
+    const session = await auth();
 
-  if (!session?.user?.id) {
-    return new NextResponse("Unauthorized", { status: 401 });
-  }
-
-  const { documentId } = await params;
-
-  const document = await prisma.document.findUnique({
-    where: {
-      id: documentId,
-      ownerId: session.user.id
+    if (!session?.user?.id) {
+      return new NextResponse("Unauthorized", { status: 401 });
     }
-  });
 
-  if (!document) {
-    return new NextResponse("Document not found", { status: 404 });
-  }
+    const { documentId } = await params;
 
-  return NextResponse.json(document);
-}
+    const document = await prisma.document.findUnique({
+      where: {
+        id: documentId,
+        OR: [
+          { ownerId: session.user.id },
+          {
+            collaborators: {
+              some: { userId: session.user.id }
+            }
+          }
+        ]
+      },
 
-export async function PATCH(
-  req: Request,
-  { params }: { params: { documentId: string } }
-) {
-  const session = await auth();
+      include: {
+        owner: true,
+        collaborators: {
+          include: {
+            user: true
+          }
+        }
+      }
+    });
 
-  if (!session?.user?.id) {
-    return new NextResponse("Unauthorized", { status: 401 });
-  }
-
-  const { title, content } = await req.json();
-
-  const document = await prisma.document.update({
-    where: {
-      id: params.documentId,
-      ownerId: session.user.id
-    },
-    data: {
-      title,
-      content: content ? Buffer.from(content, "utf-8") : undefined
+    if (!document) {
+      return new NextResponse("Not found or unauthorized", { status: 404 });
     }
-  });
 
-  return NextResponse.json(document);
+    return NextResponse.json(document);
+
+  } catch (error) {
+    console.error("[DOCUMENT_GET]", error);
+    return new NextResponse("Internal Error", { status: 500 });
+  }
 }

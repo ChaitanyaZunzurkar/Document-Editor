@@ -92,7 +92,7 @@ export const Navbar = ({ initialData }: { initialData: any }) => {
                     <Image src='/logo.svg' alt="Logo" width={36} height={36} />
                 </Link>
                 <div className="flex flex-col">
-                    <DocumentInput />
+                    <DocumentInput initialTitle={initialData.title} />
                     <div className="flex">
                         <Menubar className="border-none bg-transparent shadow-none h-auto p-0">
                             <MenubarMenu>
@@ -238,6 +238,7 @@ export const Navbar = ({ initialData }: { initialData: any }) => {
                     documentId={initialData.id}
                     title={initialData.title}
                     initialCollaborators={initialData.collaborators}
+                    ownerId={initialData.owner.id}
                 />
             </div>
         </nav>
