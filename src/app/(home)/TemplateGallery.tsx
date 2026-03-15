@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils"
 import { createDocument } from "@/lib/services/documents";
 import { FullScreenLoader } from "@/components/ui/full-screen-loader";
 import { Loader2Icon } from "lucide-react";
+import { toast } from "sonner";
 
 export const TemplateGallery = () => {
     const router = useRouter();
@@ -23,11 +24,14 @@ export const TemplateGallery = () => {
         startTransition(async () => {
             try {
                 const newDocs = await createDocument(label);
-                router.refresh();
 
+                toast.success("Document created successfully!");
+
+                router.refresh();
                 router.push(`/documents/${newDocs.id}`)
             } catch (error) {
-
+                toast.error("Failed to create document. Please try again.");
+                console.error(error);
             }
         })
     }

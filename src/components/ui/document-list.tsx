@@ -13,7 +13,7 @@ import {
   Users2
 } from "lucide-react";
 import { SiGoogledocs } from 'react-icons/si';
-
+import { toast } from "sonner";
 import {
   Table,
   TableBody,
@@ -62,6 +62,7 @@ export const DocumentList = ({ initialDocuments }: DocumentListProps) => {
       console.log(documents)
       setSkip((prev) => prev + 10);
     } catch (error) {
+      toast.error("Failed to load more documents");
       console.error("Failed to load more documents", error);
     }
   };
@@ -82,18 +83,25 @@ export const DocumentList = ({ initialDocuments }: DocumentListProps) => {
       setDeletingId(id);
       await deleteDocument(id);
       setDocuments((prev) => prev.filter((doc) => doc.id !== id));
+      toast.success("Document removed");
     } catch (error) {
       console.error("Delete failed", error);
+      toast.error("Failed to delete document");
     } finally {
       setDeletingId(null);
     }
   };
 
   const onRename = async (id: string, title: string) => {
-    const updatedDoc = await updateDocument(id, title);
-    setDocuments((prev) => 
-      prev.map((doc) => (doc.id === id ? updatedDoc : doc))
-    );
+    try {
+        const updatedDoc = await updateDocument(id, title);
+        setDocuments((prev) => 
+            prev.map((doc) => (doc.id === id ? updatedDoc : doc))
+        );
+        toast.success("Document renamed");
+    } catch (error) {
+        toast.error("Failed to rename document");
+    }
   };
 
   return (

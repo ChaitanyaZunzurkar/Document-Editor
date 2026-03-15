@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Globe, Loader2Icon, ShieldCheck } from "lucide-react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -75,8 +76,10 @@ export const AddCollaborators = ({
       const updatedData = await addCollaborator(documentId, emails, role);
       setCollaborators(updatedData.collaborators);
       setInputValue("");
+      toast.success("Collaborators added successfully");
     } catch (error) {
         console.error("Connection Error:", error);
+        toast.error("Failed to add collaborators. Please check the emails.");
     } finally {
       setIsSubmitting(false);
     }
@@ -85,6 +88,8 @@ export const AddCollaborators = ({
   useEffect(() => {
     setCollaborators(initialCollaborators);
   }, [initialCollaborators]);
+
+  // TODO: Anyone with the link feature 
 
   return (
     <Dialog>

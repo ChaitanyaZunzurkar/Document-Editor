@@ -29,17 +29,21 @@ export const getDocuments = async (skip: number = 0, take: number = 10) => {
 }
 
 export const deleteDocument = async (id: string) => {
-    const res = await fetch(`/api/documents/delete/${id}`, {
-        method: "DELETE"
-    })
+  const response = await fetch(`/api/documents/delete/${id}`, {
+    method: "DELETE",
+  });
 
-    if(!res.ok) {
-        const error = await res.json().catch(() => ({}));
-        throw new Error(error.message || "Failed to delete documents.")
-    }
+  if (!response.ok) {
+    throw new Error("Failed to delete");
+  }
 
-    return await res.json()
-}
+  const contentType = response.headers.get("content-type");
+  if (contentType && contentType.includes("application/json")) {
+    return await response.json();
+  }
+
+  return null; 
+};
 
 export const updateDocument = async(id: string, title: string) => {
     const res = await fetch(`/api/documents/update/${id}`, {

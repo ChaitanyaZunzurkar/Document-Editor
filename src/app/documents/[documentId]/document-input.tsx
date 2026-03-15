@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { updateDocument } from '@/lib/services/documents';
 import { useParams } from 'next/navigation';
 import { useState, useEffect } from 'react';
+import { toast } from 'sonner';
 
 interface DocumentInputProps {
     initialTitle: string;
@@ -24,6 +25,7 @@ export const DocumentInput = ({ initialTitle }: DocumentInputProps) => {
         const trimmedTitle = title.trim();
         if (!trimmedTitle || trimmedTitle === initialTitle) {
             setTitle(initialTitle || "Untitled Document");
+            toast.error("Document title cannot be empty");
             return;
         }
 
@@ -33,6 +35,7 @@ export const DocumentInput = ({ initialTitle }: DocumentInputProps) => {
         } catch(error) {
             console.error(error);
             setTitle(initialTitle);
+            toast.error("Failed to update title");
         } finally {
             setIsSaving(false);
         }
