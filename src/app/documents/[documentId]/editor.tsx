@@ -21,23 +21,41 @@ import StarterKit from '@tiptap/starter-kit'
 import { useEditorStore } from '@/store/use-editor-store'
 import { LineHeightExtension } from '@/extensions/list-height'
 import { Ruler } from "./ruler";
+import { Step } from '@tiptap/pm/transform';
 
 // Custom extension for font-size
 import { FontSizeExtension } from '@/extensions/font-size'
+import { useSocket } from '@/hooks/use-socket'
+import { useEffect } from 'react'
 
-export const Editor = () => {
+interface EditorProps {
+  documentId: string;
+}
+
+export const Editor = ({ documentId }: EditorProps) => {
     const { setEditor } = useEditorStore();
+    const socket = useSocket(documentId);
 
     const editor = useEditor({
         immediatelyRender: false,
+        onUpdate: ({ transaction, editor }) => {
+            setEditor(editor);
+            if (transaction.getMeta("remote")) return;
+
+            // Grab only the exact changes (Deltas) made in this keystroke
+            const steps = transaction.steps.map(step => step.toJSON());
+            
+            // If there are no actual document changes, do nothing
+            if (steps.length === 0) return; 
+
+            // Send an Array of tiny change objects instead of a massive HTML string
+            socket?.emit("send-changes", documentId, steps);
+        },
         onCreate({ editor }) {
             setEditor(editor)
         },
         onDestroy() {
             setEditor(null)
-        },
-        onUpdate({ editor }) {
-            setEditor(editor)
         },
         onSelectionUpdate({ editor }) {
             setEditor(editor)
@@ -101,6 +119,30 @@ export const Editor = () => {
             })
         ],
     })
+
+    useEffect(() => {
+        if (!socket || !editor) return;
+
+        const handler = (steps: any[]) => {
+            // 1. Open a blank transaction (request form)
+            const transaction = editor.state.tr;
+
+            // 2. Reconstruct each step from the server and add it to the transaction
+            steps.forEach((stepJSON) => {
+                const step = Step.fromJSON(editor.schema, stepJSON);
+                transaction.step(step);
+            });
+
+            // 3. Mark the whole batch as 'remote' and execute it
+            transaction.setMeta("remote", true);
+            editor.view.dispatch(transaction);
+        }
+
+        socket.on("receive-changes", handler)
+        return () => {
+            socket.off("receive-changes", handler)
+        }
+    }, [socket, editor])
 
     return (
         <div className='size-full overflow-x-auto bg-[#F9FBFD] px-4 print:p-0 print:bg-white print:overflow-visible'>

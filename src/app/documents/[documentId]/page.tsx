@@ -26,7 +26,7 @@ const DocumentPage = async ({ params }: DocumentIdProps) => {
 
       <div className="pt-[114px] print:pt-0">
         <div className="mx-auto max-w-5xl"> 
-           <Editor />
+           <Editor documentId={documentId} />
         </div>
       </div>
     </div>

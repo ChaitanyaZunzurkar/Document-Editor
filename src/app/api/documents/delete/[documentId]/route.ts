@@ -2,6 +2,7 @@ import { auth } from "@/auth"
 import  { prisma } from "@/lib/prisma"
 import { NextResponse } from "next/server"
 
+// TODO: Prevent Editors and Viewer from deleteing the document only owner should be able to delete the document 
 export async function DELETE(
     req: Request,
     { params }: { params: Promise<{ documentId: string }> }
