@@ -22,11 +22,12 @@ import { useEditorStore } from '@/store/use-editor-store'
 import { LineHeightExtension } from '@/extensions/list-height'
 import { Ruler } from "./ruler";
 import { Step } from '@tiptap/pm/transform';
+import { LiveCursors } from '@/extensions/live-cursors';
 
 // Custom extension for font-size
 import { FontSizeExtension } from '@/extensions/font-size'
 import { useSocket } from '@/hooks/use-socket'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 interface EditorProps {
   documentId: string;
@@ -54,14 +55,20 @@ export const Editor = ({ documentId, userName}: EditorProps) => {
             // Send an Array of tiny change objects instead of a massive HTML string
             socket?.emit("send-changes", documentId, steps);
         },
+        onSelectionUpdate({ editor }) {
+            setEditor(editor)
+
+            const { from } = editor.state.selection
+            socket?.emit("cursor-move", documentId, {
+                id: socket.id,
+                position: from
+            })
+        },
         onCreate({ editor }) {
             setEditor(editor)
         },
         onDestroy() {
             setEditor(null)
-        },
-        onSelectionUpdate({ editor }) {
-            setEditor(editor)
         },
         onTransaction({ editor }) {
             setEditor(editor)
@@ -83,6 +90,7 @@ export const Editor = ({ documentId, userName}: EditorProps) => {
         },
         extensions: [
             StarterKit,
+            LiveCursors,
             FontSizeExtension,
             LineHeightExtension.configure({
                 types: ["heading", "paragraph"],
@@ -123,6 +131,38 @@ export const Editor = ({ documentId, userName}: EditorProps) => {
         ],
     })
 
+    const collaboratorsRef = useRef(collaborators);
+    useEffect(() => {
+        collaboratorsRef.current = collaborators;
+    }, [collaborators]);
+
+    // Listen for incoming cursor movements
+    useEffect(() => {
+        if (!socket || !editor) return;
+
+        const cursorHandler = (cursorData: any) => {
+            // Find who moved their mouse to get their color and name
+            const user = collaboratorsRef.current.find(u => u.id === cursorData.id);
+            if (!user) return;
+
+            // Bundle the position, color, and name
+            const activeCursors = [{
+                position: cursorData.position,
+                color: user.color,
+                name: user.name
+            }];
+
+            // Send this bundle to our custom Tiptap extension
+            editor.view.dispatch(editor.state.tr.setMeta('updateCursors', activeCursors));
+        };
+
+        socket.on("receive-cursor", cursorHandler);
+
+        return () => {
+            socket.off("receive-cursor", cursorHandler);
+        };
+    }, [socket, editor]);
+
     useEffect(() => {
         if (!socket || !editor) return;
 
@@ -160,6 +200,21 @@ export const Editor = ({ documentId, userName}: EditorProps) => {
         return () => {
             socket.off("presence-update", presenceHandler)
         }
+    }, [socket])
+
+    useEffect(() => {
+        if(!socket) return;
+
+        const cursorHandler = (cursorData: any) => {
+            console.log("SOMEONE MOVED THEIR CURSOR:", cursorData);
+        }
+
+        socket.on("receive-cursor", cursorHandler);
+
+        return () => {
+            socket.off("receive-cursor", cursorHandler);
+        };
+
     }, [socket])
 
     return (

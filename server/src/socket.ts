@@ -1,10 +1,11 @@
 import { Server } from 'socket.io';
 import { Server as HttpServer } from 'http';
 
-// Helper function to generate a random vibrant color
+// Helper function to generate an infinite variety of vibrant colors
 const generateRandomColor = () => {
-    const hue = Math.floor(Math.random() * 360); // Pick a random color around the color wheel
-    return `hsl(${hue}, 80%, 45%)`; // 80% Saturation (vibrant), 45% Lightness (readable)
+    const hue = Math.floor(Math.random() * 360); // 0 to 360 degrees on the color wheel
+    // 80% saturation (vibrant), 45% lightness (dark enough to see white text on it)
+    return `hsl(${hue}, 80%, 45%)`; 
 };
 
 export const setupSocket = (httpServer: HttpServer) => {
@@ -16,15 +17,16 @@ export const setupSocket = (httpServer: HttpServer) => {
             origin: "http://localhost:3000",
             methods: ["GET", "POST"]
         },
-        pingTimeout: 60000,
-        pingInterval: 25000
-    });
+        
+        pingTimeout: 60000, // Wait 60s before closing dead connections
+        pingInterval: 25000 // Check every 25s
+    })
 
     io.on("connection", (socket) => {
         console.log(`Connected: ${socket.id}`);
 
         socket.on("join-document", (documentId: string, userName: string) => {
-            socket.join(documentId);
+            socket.join(documentId)
 
             // 1. Generate the dynamic color here
             const color = generateRandomColor();
@@ -33,16 +35,16 @@ export const setupSocket = (httpServer: HttpServer) => {
                 id: socket.id,
                 color: color,
                 name: userName || "Anonymous"
-            };
+            }
 
             let userInRoom = roomUser.get(documentId) || [];
-            userInRoom.push(user);
-            roomUser.set(documentId, userInRoom);
+            userInRoom.push(user)
+            roomUser.set(documentId, userInRoom)
 
             io.to(documentId).emit("presence-update", userInRoom);
 
             console.log(`${user.name} joined ${documentId} with color ${color}`);
-        });
+        })
 
         socket.on("send-changes", (documentId: string, data: any) => {
             let version = documentVersions.get(documentId) || 0;
@@ -55,19 +57,25 @@ export const setupSocket = (httpServer: HttpServer) => {
             console.log(`Room: ${documentId} | New Version: ${version}`);
         });
 
+        // Fast-pass relay for live cursor movements
+        socket.on("cursor-move", (documentId: string, cursorData: any) => {
+            // Instantly bounce the cursor position to everyone else in the room
+            socket.to(documentId).emit("receive-cursor", cursorData);
+        });
+
         socket.on("disconnect", () => {
             console.log(`Disconnected: ${socket.id}`);
 
             roomUser.forEach((user, documentId) => {
-                const updatedUsers = user.filter((u) => u.id != socket.id);
+                const updatedUsers = user.filter((u) => u.id != socket.id)
 
                 if(updatedUsers.length === 0) {
-                    roomUser.delete(documentId);
+                    roomUser.delete(documentId)
                 } else {
-                    roomUser.set(documentId, updatedUsers);
-                    io.to(documentId).emit("presence-update", updatedUsers);
+                    roomUser.set(documentId, updatedUsers)
+                    io.to(documentId).emit("presence-update", updatedUsers)
                 }
-            });
-        });
-    });
-};
+            })
+        })
+    })
+}
