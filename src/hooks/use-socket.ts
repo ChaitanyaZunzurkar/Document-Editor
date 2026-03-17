@@ -1,18 +1,22 @@
-import { useRef, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { io, Socket } from 'socket.io-client'
 
-export const useSocket = (documentId: string) => {
-    const socketRef = useRef<Socket | null>(null);
+export const useSocket = (documentId: string, userName: string) => {
+    // 1. Swapped useRef for useState
+    const [socket, setSocket] = useState<Socket | null>(null);
 
     useEffect(() => {
-        socketRef.current = io('http://localhost:3001')
+        const newSocket = io('http://localhost:3001')
+        
+        // 2. Set the socket in state, which triggers the Editor to re-render
+        setSocket(newSocket)
 
-        socketRef.current.emit("join-document", documentId)
+        newSocket.emit("join-document", documentId, userName)
 
         return () => {
-            socketRef?.current?.disconnect()
+            newSocket.disconnect()
         }
-    }, [documentId])
+    }, [documentId, userName])
 
-    return socketRef.current
+    return socket
 }

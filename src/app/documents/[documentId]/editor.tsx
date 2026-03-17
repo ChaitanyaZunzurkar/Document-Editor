@@ -26,15 +26,18 @@ import { Step } from '@tiptap/pm/transform';
 // Custom extension for font-size
 import { FontSizeExtension } from '@/extensions/font-size'
 import { useSocket } from '@/hooks/use-socket'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 
 interface EditorProps {
   documentId: string;
+  userName: string
 }
 
-export const Editor = ({ documentId }: EditorProps) => {
+export const Editor = ({ documentId, userName}: EditorProps) => {
     const { setEditor } = useEditorStore();
-    const socket = useSocket(documentId);
+    const socket = useSocket(documentId, userName);
+
+    const [collaborators, setCollaborators] = useState<any[]>([]);
 
     const editor = useEditor({
         immediatelyRender: false,
@@ -144,8 +147,36 @@ export const Editor = ({ documentId }: EditorProps) => {
         }
     }, [socket, editor])
 
+    useEffect(() => {
+        if(!socket) return;
+
+        const presenceHandler = (users: any[]) => {
+            const others = users.filter((u) => u.id !== socket.id)
+            setCollaborators(others)
+        }
+
+        socket.on("presence-update", presenceHandler);
+
+        return () => {
+            socket.off("presence-update", presenceHandler)
+        }
+    }, [socket])
+
     return (
         <div className='size-full overflow-x-auto bg-[#F9FBFD] px-4 print:p-0 print:bg-white print:overflow-visible'>
+            <div className="flex justify-end gap-2 p-2 w-[816px] mx-auto">
+                {collaborators?.map((user) => (
+                    <div
+                        key={user.id}
+                        className="flex items-center justify-center w-8 h-8 rounded-full text-white font-bold text-sm"
+                        style={{ backgroundColor: user.color }}
+                        title={user.name}
+                    >
+                        { user.name.charAt(0).toUpperCase() }
+                    </div>
+                ))}
+            </div>
+
             <Ruler /> 
             <div className='min-w-max flex justify-center w-[816px] py-4 print:py-0 mx-auto print:w-full print:min-w-0'>
                 <EditorContent editor={editor} />
