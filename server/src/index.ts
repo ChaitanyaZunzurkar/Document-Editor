@@ -1,6 +1,10 @@
 import express from 'express'
 import { createServer } from 'http'
 import { setupSocket } from './socket'
+import dotenv from 'dotenv';
+import path from 'path';
+
+dotenv.config({ path: path.resolve(__dirname, '../../.env') }); 
 
 const app = express();
 const httpServer = createServer(app)

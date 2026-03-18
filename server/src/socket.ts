@@ -28,23 +28,39 @@ export const setupSocket = (httpServer: HttpServer) => {
     io.on("connection", (socket) => {
         console.log(`Connected: ${socket.id}`);
 
-        // The Bouncer logic added to join-document
         socket.on("join-document", async (documentId: string, userName: string, userId: string) => {
             try {
-                // Query database to verify the document exists
+                // 1. Query database for the document AND its guest list (collaborators)
                 const document = await prisma.document.findUnique({
-                    where: { id: documentId }
+                    where: { id: documentId },
+                    include: {
+                        collaborators: true 
+                    }
                 });
 
-                // If document doesn't exist, kick the user out
+                // 2. If document doesn't exist, kick them out
                 if (!document) {
                     console.log(`Access Denied: User ${userId} tried to join invalid room ${documentId}`);
-                    socket.emit("access-denied", "Document not found or you do not have permission.");
+                    socket.emit("access-denied", "Document not found.");
                     socket.disconnect();
                     return;
                 }
 
-                // Document exists, let them in
+                const isOwner = document.ownerId === userId;
+                const isCollaborator = document.collaborators.some((collab: any) => collab.userId === userId);
+                
+                // Check if the document has the public flag set to true
+                const isPublic = document.isPublic; 
+
+                // If they are not the owner, not a collaborator, AND the document is restricted, kick them!
+                if (!isOwner && !isCollaborator && !isPublic) {
+                    console.log(`Security Kick: Unauthorized user ${userId} blocked from ${documentId}`);
+                    socket.emit("access-denied", "You do not have permission to view this document.");
+                    socket.disconnect();
+                    return;
+                }
+
+                // Document exists AND they have permission, let them in
                 socket.join(documentId);
                 const color = generateRandomColor();
                 

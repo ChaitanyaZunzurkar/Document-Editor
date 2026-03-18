@@ -27,6 +27,7 @@ import { LiveCursors } from '@/extensions/live-cursors';
 import { FontSizeExtension } from '@/extensions/font-size'
 import { useSocket } from '@/hooks/use-socket'
 import { useEffect, useRef, useState } from 'react'
+import { useRouter } from 'next/navigation';
 
 interface EditorProps {
     documentId: string;
@@ -37,8 +38,9 @@ interface EditorProps {
 // 2. NEW: Destructure userId from the component props
 export const Editor = ({ documentId, userName, userId }: EditorProps) => {
     const { setEditor } = useEditorStore();
+    const router = useRouter();
     
-    // 3. NEW: Pass userId into your socket hook
+    // Pass userId into your socket hook
     const socket = useSocket(documentId, userName, userId);
     let saveTimeout: NodeJS.Timeout;
 
@@ -111,7 +113,8 @@ export const Editor = ({ documentId, userName, userId }: EditorProps) => {
         if (!socket) return;
         
         socket.on("access-denied", (message) => {
-            alert(message);
+            console.error("Access Denied:", message);
+            router.push("/");
         });
         
         return () => { 

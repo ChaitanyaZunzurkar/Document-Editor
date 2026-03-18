@@ -33,6 +33,7 @@ model Document {
   ownerId       String
   owner         User           @relation("DocumentOwner", fields: [ownerId], references: [id], onDelete: Cascade)
   collaborators Collaborator[]
+  isPublic      Boolean        @default(false)
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
 }
