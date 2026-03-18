@@ -31,6 +31,7 @@ const DocumentPage = async ({ params }: DocumentIdProps) => {
            <Editor 
               documentId={documentId}
               userName={session?.user?.name || "Guest"}
+              userId={(session?.user as any)?.id || "anonymous"}
             />
         </div>
       </div>
@@ -38,4 +39,4 @@ const DocumentPage = async ({ params }: DocumentIdProps) => {
   )
 }
 
-export default DocumentPage
+export default DocumentPage;

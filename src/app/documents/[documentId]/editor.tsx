@@ -24,19 +24,23 @@ import { Ruler } from "./ruler";
 import { Step } from '@tiptap/pm/transform';
 import { LiveCursors } from '@/extensions/live-cursors';
 
-// Custom extension for font-size
 import { FontSizeExtension } from '@/extensions/font-size'
 import { useSocket } from '@/hooks/use-socket'
 import { useEffect, useRef, useState } from 'react'
 
 interface EditorProps {
-  documentId: string;
-  userName: string
+    documentId: string;
+    userName: string;
+    userId: string; // 1. NEW: Added userId to props
 }
 
-export const Editor = ({ documentId, userName}: EditorProps) => {
+// 2. NEW: Destructure userId from the component props
+export const Editor = ({ documentId, userName, userId }: EditorProps) => {
     const { setEditor } = useEditorStore();
-    const socket = useSocket(documentId, userName);
+    
+    // 3. NEW: Pass userId into your socket hook
+    const socket = useSocket(documentId, userName, userId);
+    let saveTimeout: NodeJS.Timeout;
 
     const [collaborators, setCollaborators] = useState<any[]>([]);
 
@@ -46,14 +50,18 @@ export const Editor = ({ documentId, userName}: EditorProps) => {
             setEditor(editor);
             if (transaction.getMeta("remote")) return;
 
-            // Grab only the exact changes (Deltas) made in this keystroke
             const steps = transaction.steps.map(step => step.toJSON());
-            
-            // If there are no actual document changes, do nothing
             if (steps.length === 0) return; 
 
-            // Send an Array of tiny change objects instead of a massive HTML string
             socket?.emit("send-changes", documentId, steps);
+
+            clearTimeout(saveTimeout);
+            
+            saveTimeout = setTimeout(() => {
+                const content = editor.getHTML(); 
+                socket?.emit("save-document", documentId, content);
+                console.log("Auto-saving to database...");
+            }, 3000);
         },
         onSelectionUpdate({ editor }) {
             setEditor(editor)
@@ -64,24 +72,12 @@ export const Editor = ({ documentId, userName}: EditorProps) => {
                 position: from
             })
         },
-        onCreate({ editor }) {
-            setEditor(editor)
-        },
-        onDestroy() {
-            setEditor(null)
-        },
-        onTransaction({ editor }) {
-            setEditor(editor)
-        },
-        onFocus({ editor }) {
-            setEditor(editor)
-        },
-        onBlur({ editor }) {
-            setEditor(editor)
-        },
-        onContentError({ editor }) {
-            setEditor(editor)
-        },
+        onCreate({ editor }) { setEditor(editor) },
+        onDestroy() { setEditor(null) },
+        onTransaction({ editor }) { setEditor(editor) },
+        onFocus({ editor }) { setEditor(editor) },
+        onBlur({ editor }) { setEditor(editor) },
+        onContentError({ editor }) { setEditor(editor) },
         editorProps: {
             attributes: {
                 style: 'padding-left: 56px; padding-right: 56px;', 
@@ -92,42 +88,17 @@ export const Editor = ({ documentId, userName}: EditorProps) => {
             StarterKit,
             LiveCursors,
             FontSizeExtension,
-            LineHeightExtension.configure({
-                types: ["heading", "paragraph"],
-                defaultLineHeight: "normal"
-            }),
-            TextAlign.configure({
-                types: ["heading", "paragraph"]
-            }),
+            LineHeightExtension.configure({ types: ["heading", "paragraph"], defaultLineHeight: "normal" }),
+            TextAlign.configure({ types: ["heading", "paragraph"] }),
             TaskList,
-            TaskItem.configure({
-                nested: true,
-            }),
-            Heading.configure({
-                levels: [1,2,3,4,5,6],
-            }),
-            Table.configure({
-                resizable: true
-            }),
-            TableRow,
-            TableCell,
-            TableHeader,
-            Underline,
-            FontFamily,
-            TextStyle,
-            Color,
-            Highlight.configure({
-                multicolor: true
-            }),
-            Link.configure({
-                openOnClick: true,
-                autolink: true,
-                defaultProtocol: "https"
-            }),
+            TaskItem.configure({ nested: true }),
+            Heading.configure({ levels: [1,2,3,4,5,6] }),
+            Table.configure({ resizable: true }),
+            TableRow, TableCell, TableHeader, Underline, FontFamily, TextStyle, Color,
+            Highlight.configure({ multicolor: true }),
+            Link.configure({ openOnClick: true, autolink: true, defaultProtocol: "https" }),
             Image,
-            ImageResize.configure({
-                inline: true,
-            })
+            ImageResize.configure({ inline: true })
         ],
     })
 
@@ -136,23 +107,68 @@ export const Editor = ({ documentId, userName}: EditorProps) => {
         collaboratorsRef.current = collaborators;
     }, [collaborators]);
 
-    // Listen for incoming cursor movements
+    useEffect(() => {
+        if (!socket) return;
+        
+        socket.on("access-denied", (message) => {
+            alert(message);
+        });
+        
+        return () => { 
+            socket.off("access-denied"); 
+        };
+    }, [socket]);
+
+    // Phase 4: History & Sync Listener
+    useEffect(() => {
+        if (!socket || !editor) return;
+
+        socket.emit("request-document", documentId);
+
+        const loadHandler = (pastSteps: any[]) => {
+            if (pastSteps.length === 0) return; 
+            const transaction = editor.state.tr;
+            pastSteps.forEach((stepJSON) => {
+                const step = Step.fromJSON(editor.schema, stepJSON);
+                transaction.step(step);
+            });
+            transaction.setMeta("remote", true);
+            editor.view.dispatch(transaction);
+        };
+
+        const changeHandler = (steps: any[]) => {
+            const transaction = editor.state.tr;
+            steps.forEach((stepJSON) => {
+                const step = Step.fromJSON(editor.schema, stepJSON);
+                transaction.step(step);
+            });
+            transaction.setMeta("remote", true);
+            editor.view.dispatch(transaction);
+        }
+
+        socket.on("load-document", loadHandler);
+        socket.on("receive-changes", changeHandler);
+
+        return () => {
+            socket.off("load-document", loadHandler);
+            socket.off("receive-changes", changeHandler);
+        }
+    }, [socket, editor, documentId]); 
+
+    // Phase 3: Live Cursors Listener
     useEffect(() => {
         if (!socket || !editor) return;
 
         const cursorHandler = (cursorData: any) => {
-            // Find who moved their mouse to get their color and name
             const user = collaboratorsRef.current.find(u => u.id === cursorData.id);
             if (!user) return;
 
-            // Bundle the position, color, and name
             const activeCursors = [{
                 position: cursorData.position,
                 color: user.color,
                 name: user.name
             }];
 
-            // Send this bundle to our custom Tiptap extension
             editor.view.dispatch(editor.state.tr.setMeta('updateCursors', activeCursors));
         };
 
@@ -163,30 +179,7 @@ export const Editor = ({ documentId, userName}: EditorProps) => {
         };
     }, [socket, editor]);
 
-    useEffect(() => {
-        if (!socket || !editor) return;
-
-        const handler = (steps: any[]) => {
-            // 1. Open a blank transaction (request form)
-            const transaction = editor.state.tr;
-
-            // 2. Reconstruct each step from the server and add it to the transaction
-            steps.forEach((stepJSON) => {
-                const step = Step.fromJSON(editor.schema, stepJSON);
-                transaction.step(step);
-            });
-
-            // 3. Mark the whole batch as 'remote' and execute it
-            transaction.setMeta("remote", true);
-            editor.view.dispatch(transaction);
-        }
-
-        socket.on("receive-changes", handler)
-        return () => {
-            socket.off("receive-changes", handler)
-        }
-    }, [socket, editor])
-
+    // Phase 3: Presence Listener
     useEffect(() => {
         if(!socket) return;
 
@@ -200,21 +193,6 @@ export const Editor = ({ documentId, userName}: EditorProps) => {
         return () => {
             socket.off("presence-update", presenceHandler)
         }
-    }, [socket])
-
-    useEffect(() => {
-        if(!socket) return;
-
-        const cursorHandler = (cursorData: any) => {
-            console.log("SOMEONE MOVED THEIR CURSOR:", cursorData);
-        }
-
-        socket.on("receive-cursor", cursorHandler);
-
-        return () => {
-            socket.off("receive-cursor", cursorHandler);
-        };
-
     }, [socket])
 
     return (
