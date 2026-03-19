@@ -658,7 +658,7 @@ export const Toolbar = () => {
                 icon: MessageSquarePlusIcon,
                 onClick: () => {
                     if (!editor?.state.selection.empty) {
-                        editor?.chain().focus().setThread("draft").run();
+                        editor?.chain().focus().setMark("thread", { threadId: "draft" }).run();
                     }
                 },
                 isActive: editor?.isActive("thread"),

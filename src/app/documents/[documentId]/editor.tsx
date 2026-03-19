@@ -202,26 +202,31 @@ export const Editor = ({ documentId, userName, userId }: EditorProps) => {
     }, [socket])
 
     return (
-        <div className="flex w-full h-full">
-            <div className='size-full overflow-x-auto bg-[#F9FBFD] px-4 print:p-0 print:bg-white print:overflow-visible'>
-                <div className="flex justify-end gap-2 p-2 w-[816px] mx-auto">
-                    {collaborators?.map((user) => (
-                        <div
-                            key={user.id}
-                            className="flex items-center justify-center w-8 h-8 rounded-full text-white font-bold text-sm"
-                            style={{ backgroundColor: user.color }}
-                            title={user.name}
-                        >
-                            { user.name.charAt(0).toUpperCase() }
-                        </div>
-                    ))}
-                </div>
+        <div className="relative w-full h-full bg-[#F9FBFD] overflow-hidden print:overflow-visible">
+            
+            <div className="w-full h-full overflow-y-auto">
+                <div className="w-[816px] mx-auto py-4 print:p-0 print:bg-white">
+                    
+                    <div className="flex justify-end gap-2 pb-2 w-full">
+                        {collaborators?.map((user) => (
+                            <div
+                                key={user.id}
+                                className="flex items-center justify-center w-8 h-8 rounded-full text-white font-bold text-sm"
+                                style={{ backgroundColor: user.color }}
+                                title={user.name}
+                            >
+                                { user.name.charAt(0).toUpperCase() }
+                            </div>
+                        ))}
+                    </div>
 
-                <Ruler /> 
-                <div className='relative flex justify-center w-[816px] py-4 print:py-0 mx-auto print:w-full print:min-w-0'>
+                    <Ruler /> 
                     <EditorContent editor={editor} />
-                    <FloatingThreads editor={editor} documentId={documentId} />
                 </div>
+            </div>
+
+            <div className="absolute top-4 bottom-4 left-[calc(50%+408px+24px)] w-[280px] print:hidden">
+                <FloatingThreads editor={editor} documentId={documentId} />
             </div>
         </div>
     )
