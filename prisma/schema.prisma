@@ -24,6 +24,8 @@ model User {
   sessions       Session[]
 
   createdAt DateTime @default(now())
+
+  comments Comment[]
 }
 
 model Document {
@@ -36,6 +38,8 @@ model Document {
   isPublic      Boolean        @default(false)
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
+
+  threads Thread[]
 }
 
 model Collaborator {
@@ -47,6 +51,31 @@ model Collaborator {
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([documentId, userId])
+}
+
+model Thread {
+  id          String    @id @default(cuid())
+  documentId  String
+  document    Document  @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  resolved    Boolean   @default(false)
+  
+  quote       String?   @db.Text 
+  
+  comments    Comment[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Comment {
+  id          String   @id @default(cuid())
+  threadId    String
+  thread      Thread   @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  content     String   @db.Text
+  createdAt   DateTime @default(now())
 }
 
 enum Role {
