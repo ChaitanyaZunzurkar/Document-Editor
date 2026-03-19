@@ -4,16 +4,19 @@ import { auth } from '@/auth';
 
 export const getDocumentByIdServer = async (id: string) => {
     const session = await auth();
-    if (!session?.user?.id) return null;
+    const userId = session?.user?.id;
 
     return await prisma.document.findFirst({
         where: {
             id,
             OR: [
-                { ownerId: session.user.id },       
-                { collaborators: {
-                    some: { userId: session.user.id }
-                }}
+                { isPublic: true },
+                ...(userId ? [
+                    { ownerId: userId },       
+                    { collaborators: {
+                        some: { userId: userId }
+                    }}
+                ] : [])
             ]
         },
         include: {

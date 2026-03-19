@@ -1,6 +1,3 @@
-'use server'
-import { prisma } from '@/lib/prisma'; 
-
 export const createDocument = async (title: string = "Untitled Document") => {
     const res = await fetch('/api/documents/create', {
         method: "POST",
@@ -115,8 +112,18 @@ export const searchDocument = async (query: string) => {
 };
 
 export const updateDocumentAccess = async (documentId: string, isPublic: boolean) => {
-    return await prisma.document.update({
-        where: { id: documentId },
-        data: { isPublic }
+    const res = await fetch(`/api/documents/access`, {
+        method: "PATCH",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ documentId, isPublic })
     });
+
+    if (!res.ok) {
+        const error = await res.json().catch(() => ({}));
+        throw new Error(error.message || "Failed to update document access.");
+    }
+
+    return await res.json();
 };

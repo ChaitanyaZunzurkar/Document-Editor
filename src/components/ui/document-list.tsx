@@ -32,6 +32,7 @@ import {
 import { deleteDocument, getDocuments, updateDocument } from "@/lib/services/documents";
 import { cn } from "@/lib/utils";
 import { RenameDialog } from "./rename-dialog";
+import { format } from "date-fns";
 
 interface DocumentListProps {
   initialDocuments: any[];
@@ -149,7 +150,7 @@ export const DocumentList = ({ initialDocuments }: DocumentListProps) => {
                     {doc.owner?.name || "Me"}
                   </TableCell>
                   <TableCell className="text-muted-foreground hidden md:table-cell">
-                    {new Date(doc.updatedAt).toLocaleDateString()}
+                    {format(new Date(doc.updatedAt), "MMM d, yyyy")}
                   </TableCell>
                   <TableCell className="text-right pr-4" onClick={(e) => e.stopPropagation()}>
                     <DropdownMenu>

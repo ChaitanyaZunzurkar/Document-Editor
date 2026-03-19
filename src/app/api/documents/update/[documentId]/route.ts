@@ -37,3 +37,4 @@ export async function PATCH(
         return new NextResponse("Fail to update document", { status: 500 });
     }
 }
+
