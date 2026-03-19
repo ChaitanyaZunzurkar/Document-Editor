@@ -1,57 +1,40 @@
-import { Mark, mergeAttributes } from '@tiptap/core';
-
-export interface ThreadOptions {
-  HTMLAttributes: Record<string, any>;
-}
+import { Mark, mergeAttributes } from '@tiptap/core'
 
 declare module '@tiptap/core' {
   interface Commands<ReturnType> {
     thread: {
-      /**
-       * Set a comment thread mark on the selected text
-       */
-      setThread: (threadId: string) => ReturnType;
-      /**
-       * Remove a comment thread mark
-       */
-      unsetThread: () => ReturnType;
-    };
+      setThread: (threadId: string) => ReturnType,
+      unsetThread: () => ReturnType,
+    }
   }
 }
 
-export const ThreadExtension = Mark.create<ThreadOptions>({
+export const ThreadExtension = Mark.create({
   name: 'thread',
-
-  // Marks can overlap with other marks (like Bold + Italic + Comment)
-  inclusive: false, 
 
   addOptions() {
     return {
       HTMLAttributes: {
-        class: 'comment-thread-highlight',
+        class: 'bg-yellow-200 cursor-pointer border-b-2 border-yellow-400',
       },
-    };
+    }
   },
 
   addAttributes() {
     return {
       threadId: {
         default: null,
-        // Tell Tiptap how to find this ID when loading from the database
         parseHTML: element => element.getAttribute('data-thread-id'),
-        // Tell Tiptap how to write this to the DOM
         renderHTML: attributes => {
           if (!attributes.threadId) {
-            return {};
+            return {}
           }
           return {
             'data-thread-id': attributes.threadId,
-            // Classic Google Docs yellow highlight styling!
-            style: 'background-color: #fef08a; cursor: pointer; border-bottom: 2px solid #eab308;', 
-          };
+          }
         },
       },
-    };
+    }
   },
 
   parseHTML() {
@@ -59,25 +42,21 @@ export const ThreadExtension = Mark.create<ThreadOptions>({
       {
         tag: 'span[data-thread-id]',
       },
-    ];
+    ]
   },
 
   renderHTML({ HTMLAttributes }) {
-    return ['span', mergeAttributes(this.options.HTMLAttributes, HTMLAttributes), 0];
+    return ['span', mergeAttributes(this.options.HTMLAttributes, HTMLAttributes), 0]
   },
 
   addCommands() {
     return {
-      setThread:
-        (threadId) =>
-        ({ commands }) => {
-          return commands.setMark(this.name, { threadId });
-        },
-      unsetThread:
-        () =>
-        ({ commands }) => {
-          return commands.unsetMark(this.name);
-        },
-    };
+      setThread: (threadId: string) => ({ commands }) => {
+        return commands.setMark(this.name, { threadId })
+      },
+      unsetThread: () => ({ commands }) => {
+        return commands.unsetMark(this.name)
+      },
+    }
   },
-});
+})

@@ -656,8 +656,12 @@ export const Toolbar = () => {
             {
                 label: "Comment",
                 icon: MessageSquarePlusIcon,
-                onClick: () => console.log("Comment"),
-                isActive: false,
+                onClick: () => {
+                    if (!editor?.state.selection.empty) {
+                        editor?.chain().focus().setThread("draft").run();
+                    }
+                },
+                isActive: editor?.isActive("thread"),
             },
             {
                 label: "List Todo",

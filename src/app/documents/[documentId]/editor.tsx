@@ -29,7 +29,7 @@ import { useSocket } from '@/hooks/use-socket'
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation';
 import { ThreadExtension } from '@/extensions/threads';
-import { ThreadSidebar } from './thread-sidebar';
+import { FloatingThreads } from './floating-threads';
 
 interface EditorProps {
     documentId: string;
@@ -218,11 +218,11 @@ export const Editor = ({ documentId, userName, userId }: EditorProps) => {
                 </div>
 
                 <Ruler /> 
-                <div className='min-w-max flex justify-center w-[816px] py-4 print:py-0 mx-auto print:w-full print:min-w-0'>
+                <div className='relative flex justify-center w-[816px] py-4 print:py-0 mx-auto print:w-full print:min-w-0'>
                     <EditorContent editor={editor} />
+                    <FloatingThreads editor={editor} documentId={documentId} />
                 </div>
             </div>
-            <ThreadSidebar editor={editor} documentId={documentId} />
         </div>
     )
 }
