@@ -312,7 +312,9 @@ export const Navbar = ({ initialData }: { initialData: any }) => {
                     title={initialData.title}
                     initialCollaborators={initialData.collaborators}
                     ownerId={initialData.owner.id}
-                    initialIsPublic={initialData.isPublic}
+                    initialIsPublic={initialData.isPublic} 
+                    currentUserName={initialData.owner.name} 
+                    currentUserEmail={initialData.owner.email}                
                 />
             </div>
 

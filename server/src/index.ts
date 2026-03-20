@@ -1,18 +1,19 @@
-import express from 'express'
-import { createServer } from 'http'
-import { setupSocket } from './socket'
+import express from 'express';
+import { createServer } from 'http';
 import dotenv from 'dotenv';
 import path from 'path';
 
 dotenv.config({ path: path.resolve(__dirname, '../../.env') }); 
 
-const app = express();
-const httpServer = createServer(app)
+import { setupSocket } from './socket';
 
-setupSocket(httpServer)
+const app = express();
+const httpServer = createServer(app);
+
+setupSocket(httpServer);
 
 const PORT = 3001;
 
 httpServer.listen(PORT, () => {
     console.log("Server is running on PORT: 3001");
-})
+});

@@ -14,6 +14,7 @@ export const setupSocket = (httpServer: HttpServer) => {
     const documentVersions = new Map<string, number>();
     const roomUser = new Map<string, any[]>();
     const documentSteps = new Map<string, any[]>();
+    const documentMargins = new Map<string, { left: number, right: number }>();
 
     const io = new Server(httpServer, {
         cors: {
@@ -104,12 +105,22 @@ export const setupSocket = (httpServer: HttpServer) => {
         socket.on("request-document", (documentId: string) => {
             const history = documentSteps.get(documentId) || [];
             socket.emit("load-document", history);
+
+            const currentMargins = documentMargins.get(documentId);
+            if (currentMargins) {
+                socket.emit("receive-ruler", currentMargins);
+            }
         });
 
         // Fast-pass relay for live cursor movements
         socket.on("cursor-move", (documentId: string, cursorData: any) => {
             // Instantly bounce the cursor position to everyone else in the room
             socket.to(documentId).emit("receive-cursor", cursorData);
+        });
+
+        socket.on("ruler-move", (documentId: string, margins: { left: number, right: number }) => {
+            documentMargins.set(documentId, margins);
+            socket.to(documentId).emit("receive-ruler", margins);
         });
 
         socket.on("save-document", async (documentId: string, content: string) => {

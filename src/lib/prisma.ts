@@ -3,6 +3,7 @@ import { PrismaPg } from "@prisma/adapter-pg"; // Import the adapter
 
 const prismaClientSingleton = () => {
   // 1. Initialize the adapter with your database connection string
+
   const adapter = new PrismaPg({
     connectionString: process.env.DATABASE_URL!,
   });

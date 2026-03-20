@@ -1,13 +1,23 @@
 "use client";
 
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, useCallback } from "react";
 import { FaCaretDown } from "react-icons/fa";
 
 const markers = Array.from({ length: 83 }, (_, i) => i);
 
-export const Ruler = () => {
-  const [leftMargin, setLeftMargin] = useState(56);
-  const [rightMargin, setRightMargin] = useState(56);
+export interface RulerProps {
+  leftMargin: number;
+  rightMargin: number;
+  setLeftMargin: (position: number) => void;
+  setRightMargin: (position: number) => void;
+}
+
+export const Ruler = ({
+  leftMargin,
+  rightMargin,
+  setLeftMargin,
+  setRightMargin,
+}: RulerProps) => {
   const [isDraggingLeft, setIsDraggingLeft] = useState(false);
   const [isDraggingRight, setIsDraggingRight] = useState(false);
   
@@ -16,7 +26,8 @@ export const Ruler = () => {
   const handleLeftMouseDown = () => setIsDraggingLeft(true);
   const handleRightMouseDown = () => setIsDraggingRight(true);
 
-  const handleMouseMove = (e: MouseEvent) => {
+  // 2. Use useCallback to prevent unnecessary re-renders during dragging
+  const handleMouseMove = useCallback((e: MouseEvent) => {
     if ((isDraggingLeft || isDraggingRight) && rulerRef.current) {
       const container = rulerRef.current.querySelector("#ruler-container");
       if (container) {
@@ -27,16 +38,15 @@ export const Ruler = () => {
         if (isDraggingLeft) {
           const maxLeftPosition = 816 - rightMargin - 100; // Minimum 100px gap
           const newLeftPosition = Math.min(rawPosition, maxLeftPosition);
-          setLeftMargin(newLeftPosition);
+          setLeftMargin(newLeftPosition); // Pushes to parent/collaboration server
         } else if (isDraggingRight) {
           const maxRightMargin = 816 - leftMargin - 100;
-          // Calculate margin from the right side
           const newRightMargin = Math.max(0, Math.min(816 - rawPosition, maxRightMargin));
-          setRightMargin(newRightMargin);
+          setRightMargin(newRightMargin); // Pushes to parent/collaboration server
         }
       }
     }
-  };
+  }, [isDraggingLeft, isDraggingRight, leftMargin, rightMargin, setLeftMargin, setRightMargin]);
 
   const handleMouseUp = () => {
     setIsDraggingLeft(false);
@@ -47,15 +57,12 @@ export const Ruler = () => {
     if (isDraggingLeft || isDraggingRight) {
       window.addEventListener("mousemove", handleMouseMove);
       window.addEventListener("mouseup", handleMouseUp);
-    } else {
-      window.removeEventListener("mousemove", handleMouseMove);
-      window.removeEventListener("mouseup", handleMouseUp);
-    }
+    } 
     return () => {
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("mouseup", handleMouseUp);
     };
-  }, [isDraggingLeft, isDraggingRight]);
+  }, [isDraggingLeft, isDraggingRight, handleMouseMove]);
 
   const handleLeftDoubleClick = () => setLeftMargin(56);
   const handleRightDoubleClick = () => setRightMargin(56);
@@ -65,20 +72,13 @@ export const Ruler = () => {
       ref={rulerRef}
       className="w-[816px] mx-auto h-6 border-b border-gray-300 flex items-end relative select-none print:hidden bg-[#F9FBFD]"
     >
-      <div 
-        id="ruler-container"
-        className="w-full h-full relative"
-      >
+      <div id="ruler-container" className="w-full h-full relative">
         <div className="absolute inset-x-0 bottom-0 h-full">
           <div className="relative w-[816px] h-full">
             {markers.map((i) => {
               const position = (i * 816) / 82; 
               return (          
-                <div
-                  key={i}
-                  className="absolute bottom-0"
-                  style={{ left: `${position}px` }}
-                >
+                <div key={i} className="absolute bottom-0" style={{ left: `${position}px` }}>
                   {i % 10 === 0 ? (
                     <>
                       <div className="absolute bottom-0 h-2 w-[1px] bg-neutral-500" />

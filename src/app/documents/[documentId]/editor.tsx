@@ -26,27 +26,62 @@ import { LiveCursors } from '@/extensions/live-cursors';
 
 import { FontSizeExtension } from '@/extensions/font-size'
 import { useSocket } from '@/hooks/use-socket'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation';
 import { ThreadExtension } from '@/extensions/threads';
 import { FloatingThreads } from './floating-threads';
+import throttle from 'lodash.throttle'; // <-- Make sure to import this!
 
 interface EditorProps {
     documentId: string;
     userName: string;
-    userId: string; // 1. NEW: Added userId to props
+    userId: string;
 }
 
-// 2. NEW: Destructure userId from the component props
 export const Editor = ({ documentId, userName, userId }: EditorProps) => {
     const { setEditor } = useEditorStore();
     const router = useRouter();
     
-    // Pass userId into your socket hook
     const socket = useSocket(documentId, userName, userId);
     let saveTimeout: NodeJS.Timeout;
 
     const [collaborators, setCollaborators] = useState<any[]>([]);
+
+    // 1. COLLABORATIVE RULER STATE
+    const [leftMargin, setLeftMargin] = useState(56);
+    const [rightMargin, setRightMargin] = useState(56);
+    const isDraggingRulerRef = useRef(false);
+
+    // 2. THROTTLED EMITTER FOR RULER
+    const emitRulerChange = useMemo(
+        () => throttle((left: number, right: number) => {
+            socket?.emit("ruler-move", documentId, { left, right });
+        }, 50),
+        [socket, documentId]
+    );
+
+    const handleLeftMarginChange = (newMargin: number) => {
+        setLeftMargin(newMargin); 
+        emitRulerChange(newMargin, rightMargin);
+    };
+
+    const handleRightMarginChange = (newMargin: number) => {
+        setRightMargin(newMargin);
+        emitRulerChange(leftMargin, newMargin);
+    };
+
+    // 3. LISTEN FOR PEER RULER MOVEMENTS
+    useEffect(() => {
+        if (!socket) return;
+        const rulerHandler = (margins: { left: number, right: number }) => {
+            if (!isDraggingRulerRef.current) {
+                setLeftMargin(margins.left);
+                setRightMargin(margins.right);
+            }
+        };
+        socket.on("receive-ruler", rulerHandler);
+        return () => { socket.off("receive-ruler", rulerHandler); };
+    }, [socket]);
 
     const editor = useEditor({
         immediatelyRender: false,
@@ -84,6 +119,7 @@ export const Editor = ({ documentId, userName, userId }: EditorProps) => {
         onContentError({ editor }) { setEditor(editor) },
         editorProps: {
             attributes: {
+                // Kept your EXACT original classes intact so the box model doesn't break
                 style: 'padding-left: 56px; padding-right: 56px;', 
                 class: 'focus:outline-none print:border-0 bg-white border border-[#C7C7C7] flex flex-col min-h-[1054px] w-[816px] pt-10 pr-14 cursor-text'
             }
@@ -107,6 +143,21 @@ export const Editor = ({ documentId, userName, userId }: EditorProps) => {
         ],
     })
 
+    // 4. REACTIVELY UPDATE TIPTAP MARGINS WITHOUT BREAKING LAYOUT
+    // This injects the new padding directly into the active editor instance
+    useEffect(() => {
+        if (editor) {
+            editor.setOptions({
+                editorProps: {
+                    attributes: {
+                        ...editor.options.editorProps.attributes,
+                        style: `padding-left: ${leftMargin}px; padding-right: ${rightMargin}px;`
+                    }
+                }
+            });
+        }
+    }, [leftMargin, rightMargin, editor]);
+
     const collaboratorsRef = useRef(collaborators);
     useEffect(() => {
         collaboratorsRef.current = collaborators;
@@ -123,7 +174,7 @@ export const Editor = ({ documentId, userName, userId }: EditorProps) => {
         return () => { 
             socket.off("access-denied"); 
         };
-    }, [socket]);
+    }, [socket, router]);
 
     // Phase 4: History & Sync Listener
     useEffect(() => {
@@ -155,9 +206,16 @@ export const Editor = ({ documentId, userName, userId }: EditorProps) => {
         socket.on("load-document", loadHandler);
         socket.on("receive-changes", changeHandler);
 
+        // Optional: Load initial margins from server if you saved them for late joiners
+        socket.on("receive-ruler", (margins) => {
+            setLeftMargin(margins.left);
+            setRightMargin(margins.right);
+        });
+
         return () => {
             socket.off("load-document", loadHandler);
             socket.off("receive-changes", changeHandler);
+            socket.off("receive-ruler");
         }
     }, [socket, editor, documentId]); 
 
@@ -220,7 +278,18 @@ export const Editor = ({ documentId, userName, userId }: EditorProps) => {
                         ))}
                     </div>
 
-                    <Ruler /> 
+                    <div 
+                        onMouseDown={() => { isDraggingRulerRef.current = true; }}
+                        onMouseUp={() => { isDraggingRulerRef.current = false; }}
+                    >
+                        <Ruler 
+                            leftMargin={leftMargin} 
+                            rightMargin={rightMargin} 
+                            setLeftMargin={handleLeftMarginChange} 
+                            setRightMargin={handleRightMarginChange} 
+                        /> 
+                    </div>
+                    
                     <EditorContent editor={editor} />
                 </div>
             </div>
