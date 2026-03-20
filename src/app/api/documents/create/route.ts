@@ -1,6 +1,7 @@
+// src/app/api/documents/route.ts
 import { auth } from "@/auth"
-import  { prisma } from "@/lib/prisma"
-import { NextRequest, NextResponse } from "next/server"
+import { prisma } from "@/lib/prisma"
+import { NextResponse } from "next/server"
 
 export async function POST(req: Request) {
     const session = await auth();
@@ -10,19 +11,20 @@ export async function POST(req: Request) {
     }
 
     try {
-        const { title } = await req.json();
-        const initialData = Buffer.from("");
+        const { title, content } = await req.json();
+        const initialData = Buffer.from(content || "");
 
         const document = await prisma.document.create({
             data: {
                 title: title || "Untitled Document",
-                ownerId: session?.user?.id,
+                ownerId: session.user.id,
                 content: initialData,
             }
         })
 
         return NextResponse.json(document)
     } catch(error) {
+        console.error("Failed to create document:", error);
         return new NextResponse("Internal Error", { status: 500 })
     }
 }

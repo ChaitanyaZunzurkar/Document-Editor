@@ -1,18 +1,18 @@
-export const createDocument = async (title: string = "Untitled Document") => {
-    const res = await fetch('/api/documents/create', {
+export const createDocument = async (title: string = "", initialContent?: string) => {
+    const response = await fetch("/api/documents/create", {
         method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ title })
-    })
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+            title: title,
+            content: initialContent || "" 
+        })
+    });
 
-    if(!res.ok) {
-        const error = await res.json().catch(() => ({}));
-        throw new Error(error.message || "Failed to create document.")
+    if (!response.ok) {
+        throw new Error("Failed to create document");
     }
-
-    return await res.json()
+    
+    return response.json();
 }
 
 export const getDocuments = async (skip: number = 0, take: number = 10) => {

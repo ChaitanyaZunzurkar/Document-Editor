@@ -36,9 +36,10 @@ interface EditorProps {
     documentId: string;
     userName: string;
     userId: string;
+    initialContent?: string;
 }
 
-export const Editor = ({ documentId, userName, userId }: EditorProps) => {
+export const Editor = ({ documentId, userName, userId, initialContent }: EditorProps) => {
     const { setEditor } = useEditorStore();
     const router = useRouter();
     
@@ -84,6 +85,7 @@ export const Editor = ({ documentId, userName, userId }: EditorProps) => {
     }, [socket]);
 
     const editor = useEditor({
+        content: initialContent || '<p></p>',
         immediatelyRender: false,
         onUpdate: ({ transaction, editor }) => {
             setEditor(editor);

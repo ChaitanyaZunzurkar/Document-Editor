@@ -19,6 +19,8 @@ const DocumentPage = async ({ params }: DocumentIdProps) => {
     redirect("/");
   }
 
+  const htmlContent = document.content ? new TextDecoder().decode(document.content) : "";
+
   return (
     <div className="min-h-screen bg-[#FAFBFD]">
       <div className="flex flex-col fixed top-0 left-0 right-0 z-10 bg-[#FAFBFD] print:hidden">
@@ -32,6 +34,7 @@ const DocumentPage = async ({ params }: DocumentIdProps) => {
               documentId={documentId}
               userName={session?.user?.name || "Guest"}
               userId={(session?.user as any)?.id || "anonymous"}
+              initialContent={htmlContent}
             />
         </div>
       </div>

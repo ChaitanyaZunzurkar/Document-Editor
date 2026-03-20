@@ -20,10 +20,10 @@ export const TemplateGallery = () => {
     const router = useRouter();
     const [isCreating, startTransition] = useTransition();
 
-    const onCreate = (label: string) => {
+    const onCreate = (label: string, initialContent: string) => {
         startTransition(async () => {
             try {
-                const newDocs = await createDocument(label);
+                const newDocs = await createDocument(label, initialContent);
 
                 toast.success("Document created successfully!");
 
@@ -61,7 +61,7 @@ export const TemplateGallery = () => {
                             >
                                 <button
                                     disabled={isCreating}
-                                    onClick={() => onCreate(template.label)}
+                                    onClick={() => onCreate(template.label, template.initialContent)}
                                     style={{
                                         backgroundImage: `url(${template.imageUrl})`,
                                         backgroundSize: "cover",
