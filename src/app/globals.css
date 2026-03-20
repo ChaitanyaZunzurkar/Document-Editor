@@ -104,6 +104,7 @@ body {
   margin-right: -1px;
   pointer-events: none;
   animation: blink 1s infinite;
+  transition: all 0.1s ease-out;
   z-index: 40;
 }
 
@@ -121,11 +122,13 @@ body {
   pointer-events: none;
   z-index: 50;
   font-family: sans-serif;
+  animation: fadeName 2s forwards;
 }
 
-@keyframes blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0; }
+@keyframes fadeName {
+  0% { opacity: 1; }
+  70% { opacity: 1; }
+  100% { opacity: 0; }
 }
 
 .tiptap { 

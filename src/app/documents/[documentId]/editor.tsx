@@ -30,7 +30,8 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation';
 import { ThreadExtension } from '@/extensions/threads';
 import { FloatingThreads } from './floating-threads';
-import throttle from 'lodash.throttle'; // <-- Make sure to import this!
+import throttle from 'lodash.throttle'; 
+import { LEFT_MARGIN_DEFAULT, RIGHT_MARGIN_DEFAULT } from '@/constants/margins'
 
 interface EditorProps {
     documentId: string;
@@ -49,8 +50,8 @@ export const Editor = ({ documentId, userName, userId, initialContent }: EditorP
     const [collaborators, setCollaborators] = useState<any[]>([]);
 
     // 1. COLLABORATIVE RULER STATE
-    const [leftMargin, setLeftMargin] = useState(56);
-    const [rightMargin, setRightMargin] = useState(56);
+    const [leftMargin, setLeftMargin] = useState(LEFT_MARGIN_DEFAULT);
+    const [rightMargin, setRightMargin] = useState(RIGHT_MARGIN_DEFAULT);
     const isDraggingRulerRef = useRef(false);
 
     // 2. THROTTLED EMITTER FOR RULER
@@ -121,7 +122,6 @@ export const Editor = ({ documentId, userName, userId, initialContent }: EditorP
         onContentError({ editor }) { setEditor(editor) },
         editorProps: {
             attributes: {
-                // Kept your EXACT original classes intact so the box model doesn't break
                 style: 'padding-left: 56px; padding-right: 56px;', 
                 class: 'focus:outline-none print:border-0 bg-white border border-[#C7C7C7] flex flex-col min-h-[1054px] w-[816px] pt-10 pr-14 cursor-text'
             }
@@ -146,7 +146,6 @@ export const Editor = ({ documentId, userName, userId, initialContent }: EditorP
     })
 
     // 4. REACTIVELY UPDATE TIPTAP MARGINS WITHOUT BREAKING LAYOUT
-    // This injects the new padding directly into the active editor instance
     useEffect(() => {
         if (editor) {
             editor.setOptions({
@@ -208,7 +207,6 @@ export const Editor = ({ documentId, userName, userId, initialContent }: EditorP
         socket.on("load-document", loadHandler);
         socket.on("receive-changes", changeHandler);
 
-        // Optional: Load initial margins from server if you saved them for late joiners
         socket.on("receive-ruler", (margins) => {
             setLeftMargin(margins.left);
             setRightMargin(margins.right);
@@ -221,7 +219,9 @@ export const Editor = ({ documentId, userName, userId, initialContent }: EditorP
         }
     }, [socket, editor, documentId]); 
 
-    // Phase 3: Live Cursors Listener
+    // Phase 3: Live Cursors Listener (WITH IDLE TIMEOUT)
+    const activeCursorsRef = useRef<Record<string, any>>({});
+
     useEffect(() => {
         if (!socket || !editor) return;
 
@@ -229,19 +229,44 @@ export const Editor = ({ documentId, userName, userId, initialContent }: EditorP
             const user = collaboratorsRef.current.find(u => u.id === cursorData.id);
             if (!user) return;
 
-            const activeCursors = [{
+            // 1. Update this specific user's cursor AND record the exact time they moved
+            activeCursorsRef.current[cursorData.id] = {
                 position: cursorData.position,
                 color: user.color,
-                name: user.name
-            }];
+                name: user.name,
+                lastSeen: Date.now() // Track when they last typed
+            };
 
-            editor.view.dispatch(editor.state.tr.setMeta('updateCursors', activeCursors));
+            // 2. Dispatch ALL currently active cursors to the Tiptap plugin
+            const allActiveCursors = Object.values(activeCursorsRef.current);
+            editor.view.dispatch(editor.state.tr.setMeta('updateCursors', allActiveCursors));
         };
 
         socket.on("receive-cursor", cursorHandler);
 
+        // 3. The Cleanup Loop (Erases cursors that stopped typing)
+        const cleanupInterval = setInterval(() => {
+            const now = Date.now();
+            let cursorsChanged = false;
+
+            for (const id in activeCursorsRef.current) {
+                // If this user hasn't typed in the last 2.5 seconds...
+                if (now - activeCursorsRef.current[id].lastSeen > 2500) {
+                    delete activeCursorsRef.current[id]; // Erase them from active memory
+                    cursorsChanged = true;
+                }
+            }
+
+            // 4. If someone went idle, update Tiptap to remove their cursor from the screen
+            if (cursorsChanged && editor.view) {
+                const remainingCursors = Object.values(activeCursorsRef.current);
+                editor.view.dispatch(editor.state.tr.setMeta('updateCursors', remainingCursors));
+            }
+        }, 1000); // Check every 1 second
+
         return () => {
             socket.off("receive-cursor", cursorHandler);
+            clearInterval(cleanupInterval); // Always clean up intervals on unmount
         };
     }, [socket, editor]);
 

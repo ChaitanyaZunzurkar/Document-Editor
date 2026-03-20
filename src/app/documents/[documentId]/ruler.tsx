@@ -2,6 +2,7 @@
 
 import { useRef, useState, useEffect, useCallback } from "react";
 import { FaCaretDown } from "react-icons/fa";
+import { LEFT_MARGIN_DEFAULT, RIGHT_MARGIN_DEFAULT } from '@/constants/margins'
 
 const markers = Array.from({ length: 83 }, (_, i) => i);
 
@@ -64,8 +65,8 @@ export const Ruler = ({
     };
   }, [isDraggingLeft, isDraggingRight, handleMouseMove]);
 
-  const handleLeftDoubleClick = () => setLeftMargin(56);
-  const handleRightDoubleClick = () => setRightMargin(56);
+  const handleLeftDoubleClick = () => setLeftMargin(LEFT_MARGIN_DEFAULT);
+  const handleRightDoubleClick = () => setRightMargin(RIGHT_MARGIN_DEFAULT);
 
   return (
     <div 
