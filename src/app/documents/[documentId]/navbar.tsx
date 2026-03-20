@@ -109,15 +109,19 @@ export const Navbar = ({ initialData }: { initialData: any }) => {
             toast.success("Document moved to trash");
 
             // 3. CRITICAL: Refresh the server cache before pushing
-            // This prevents the "Success but still shows up" bug
             router.refresh();
 
             // 4. Redirect to dashboard
             router.push("/");
-        } catch (error) {
-            // This will now only trigger if the API call actually fails
+        } catch (error: any) {
             console.error("Delete failed:", error);
-            toast.error("Failed to remove document");
+            
+            // Check if the error is our 403 Forbidden from the backend
+            if (error?.response?.status === 403 || error?.message?.includes("403") || error?.message?.includes("Forbidden")) {
+                toast.error("You don't have permission to delete this. Only the owner can.");
+            } else {
+                toast.error("Failed to remove document");
+            }
         }
     }
 

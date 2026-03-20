@@ -84,10 +84,22 @@ export const DocumentList = ({ initialDocuments }: DocumentListProps) => {
       setDeletingId(id);
       await deleteDocument(id);
       setDocuments((prev) => prev.filter((doc) => doc.id !== id));
+      
       toast.success("Document removed");
-    } catch (error) {
+
+    } catch (error: any) {
       console.error("Delete failed", error);
-      toast.error("Failed to delete document");
+      
+      if (
+        error?.response?.status === 403 || 
+        error?.message?.includes("403") || 
+        error?.message?.includes("Forbidden")
+      ) {
+          toast.error("You don't have permission to delete this. Only the owner can.");
+      } else {
+          toast.error("Failed to delete document");
+      }
+
     } finally {
       setDeletingId(null);
     }
