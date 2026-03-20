@@ -6,7 +6,9 @@ export const useSocket = (documentId: string, userName: string, userId: string) 
     const [socket, setSocket] = useState<Socket | null>(null);
 
     useEffect(() => {
-        const newSocket = io('http://localhost:3001')
+        const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL || "http://localhost:3001";
+        const newSocket = io(SOCKET_URL);
+        
         setSocket(newSocket)
 
         // 2. Send the userId in the join-document event
