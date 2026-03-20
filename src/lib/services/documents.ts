@@ -65,7 +65,9 @@ export const updateDocument = async(id: string, title: string) => {
 export const addCollaborator = async (
     documentId: string, 
     emails: string[], 
-    role: string = "VIEWER"
+    role: string = "VIEWER",
+    inviterName: string,   
+    inviterEmail: string   
 ) => {
     try {
         const response = await fetch("/api/documents/collaborators/add", {
@@ -77,6 +79,8 @@ export const addCollaborator = async (
                 documentId,
                 emails,
                 role,
+                inviterName,  
+                inviterEmail, 
             }),
         });
 
@@ -126,4 +130,33 @@ export const updateDocumentAccess = async (documentId: string, isPublic: boolean
     }
 
     return await res.json();
+};
+
+export const removeCollaborator = async (
+    documentId: string, 
+    userIdToRemove: string
+) => {
+    try {
+        const response = await fetch("/api/documents/collaborators/remove", {
+            method: "DELETE", 
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                documentId,
+                userIdToRemove,
+            }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.message || "Failed to remove collaborator");
+        }
+
+        return data; 
+    } catch (error) {
+        console.error("Fail to remove collaborator", error);
+        throw error;
+    }
 };

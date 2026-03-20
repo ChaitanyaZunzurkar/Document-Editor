@@ -477,7 +477,6 @@ export const FontSizeButton = () => {
     }
   }, [editor])
 
-  // ✅ Safe guard INSIDE logic, not before hooks
   if (!editor) {
     return (
       <div className="flex items-center gap-x-0.5 opacity-50">

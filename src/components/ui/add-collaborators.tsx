@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Globe, Loader2Icon, ShieldCheck, LinkIcon } from "lucide-react";
+import { Globe, Loader2Icon, ShieldCheck, LinkIcon, XIcon, Trash2Icon } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -27,8 +27,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
-// Make sure you export both of these server actions from your services file!
-import { addCollaborator, updateDocumentAccess } from "@/lib/services/documents"; 
+import { addCollaborator, updateDocumentAccess, removeCollaborator } from "@/lib/services/documents"; 
 
 interface User {
     id: string;
@@ -48,7 +47,9 @@ interface AddCollaboratorsProps {
   title: string;
   initialCollaborators: Collaborator[];
   ownerId: string;
-  initialIsPublic: boolean; // 👈 NEW PROP
+  initialIsPublic: boolean; 
+  currentUserName: string; 
+  currentUserEmail: string;
 }
 
 export const AddCollaborators = ({ 
@@ -56,18 +57,19 @@ export const AddCollaborators = ({
     title, 
     initialCollaborators,
     ownerId,
-    initialIsPublic
+    initialIsPublic,
+    currentUserName,  
+    currentUserEmail
 }: AddCollaboratorsProps) => {
   const [inputValue, setInputValue] = useState("");
   const [role, setRole] = useState("VIEWER"); 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isRemoving, setIsRemoving] = useState<string | null>(null); // Track which user is being deleted
   const [collaborators, setCollaborators] = useState(initialCollaborators);
   
-  // State for General Access
   const [isPublicAccess, setIsPublicAccess] = useState(initialIsPublic);
   const [isUpdatingAccess, setIsUpdatingAccess] = useState(false);
 
-  // Keep state in sync if props change
   useEffect(() => {
     setCollaborators(initialCollaborators);
     setIsPublicAccess(initialIsPublic);
@@ -86,19 +88,39 @@ export const AddCollaborators = ({
     setIsSubmitting(true);
 
     try {
-      const updatedData = await addCollaborator(documentId, emails, role);
+      const updatedData = await addCollaborator(
+          documentId, 
+          emails, 
+          role, 
+          currentUserName, 
+          currentUserEmail
+      );
+      
       setCollaborators(updatedData.collaborators);
       setInputValue("");
       toast.success("Collaborators added successfully");
     } catch (error) {
-        console.error("Connection Error:", error);
         toast.error("Failed to add collaborators. Please check the emails.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  const handleRemove = async (userIdToRemove: string) => {
+    setIsRemoving(userIdToRemove);
+    try {
+      const updatedData = await removeCollaborator(documentId, userIdToRemove);
+      setCollaborators(updatedData.collaborators);
+      toast.success("Collaborator removed.");
+    } catch (error) {
+      toast.error("Failed to remove collaborator.");
+    } finally {
+      setIsRemoving(null);
+    }
+  };
+
   const handlePublicToggle = async (value: string) => {
+    // ... existing toggle logic ...
     const isNowPublic = value === "PUBLIC";
     setIsPublicAccess(isNowPublic);
     setIsUpdatingAccess(true);
@@ -106,15 +128,13 @@ export const AddCollaborators = ({
     try {
       await updateDocumentAccess(documentId, isNowPublic);
       toast.success(isNowPublic ? "Link sharing turned on" : "Document restricted");
-      
-      // Automatically copy link to clipboard when made public
       if (isNowPublic) {
         navigator.clipboard.writeText(window.location.href);
         toast.success("Link copied to clipboard!");
       }
     } catch (error) {
       toast.error("Failed to update access settings.");
-      setIsPublicAccess(!isNowPublic); // Revert UI if the server fails
+      setIsPublicAccess(!isNowPublic); 
     } finally {
       setIsUpdatingAccess(false);
     }
@@ -146,7 +166,6 @@ export const AddCollaborators = ({
         </DialogHeader>
 
         <div className="space-y-6">
-          {/* Add People Form */}
           <form onSubmit={handleSubmit} className="space-y-2">
             <Label htmlFor="emails" className="text-xs font-bold uppercase text-gray-500">
                 Add People
@@ -154,17 +173,13 @@ export const AddCollaborators = ({
             <div className="flex gap-x-2">
                 <Input 
                     id="emails" 
-                    placeholder="person@gmail.com, person2@gmail.com" 
+                    placeholder="person@gmail.com..." 
                     value={inputValue}
                     onChange={(e) => setInputValue(e.target.value)}
                     disabled={isSubmitting}
                     className="flex-1 bg-[#F1F3F4] border-none focus-visible:ring-1"
                 />
-                <Select 
-                  value={role} 
-                  onValueChange={setRole}
-                  disabled={isSubmitting}
-                >
+                <Select value={role} onValueChange={setRole} disabled={isSubmitting}>
                   <SelectTrigger className="w-[110px] bg-[#F1F3F4] border-none">
                     <SelectValue placeholder="Role" />
                   </SelectTrigger>
@@ -173,7 +188,6 @@ export const AddCollaborators = ({
                     <SelectItem value="EDITOR">Editor</SelectItem>
                   </SelectContent>
                 </Select>
-
                 <Button type="submit" disabled={isSubmitting || !inputValue.trim()}>
                     {isSubmitting ? <Loader2Icon className="size-4 animate-spin" /> : "Add"}
                 </Button>
@@ -183,34 +197,21 @@ export const AddCollaborators = ({
           <Separator />
 
           <div className="space-y-3">
-            <Label className="text-xs font-bold uppercase text-gray-500">
-                General Access
-            </Label>
+            <Label className="text-xs font-bold uppercase text-gray-500">General Access</Label>
             <div className="flex items-center justify-between bg-gray-50 p-3 rounded-lg border border-gray-100">
                 <div className="flex items-center gap-x-3">
                     <div className={`size-10 rounded-full flex items-center justify-center ${isPublicAccess ? 'bg-green-100' : 'bg-gray-200'}`}>
                         <Globe className={`size-5 ${isPublicAccess ? 'text-green-600' : 'text-gray-500'}`} />
                     </div>
                     <div className="flex flex-col">
-                        <p className="text-sm font-medium">
-                            {isPublicAccess ? "Anyone with the link" : "Restricted"}
-                        </p>
+                        <p className="text-sm font-medium">{isPublicAccess ? "Anyone with the link" : "Restricted"}</p>
                         <p className="text-xs text-muted-foreground">
-                            {isPublicAccess 
-                                ? "Anyone on the internet with the link can view" 
-                                : "Only people with access can open"}
+                            {isPublicAccess ? "Anyone on the internet with the link can view" : "Only people with access can open"}
                         </p>
                     </div>
                 </div>
-                
-                <Select 
-                  value={isPublicAccess ? "PUBLIC" : "RESTRICTED"} 
-                  onValueChange={handlePublicToggle}
-                  disabled={isUpdatingAccess}
-                >
-                  <SelectTrigger className="w-[140px] bg-white">
-                    <SelectValue />
-                  </SelectTrigger>
+                <Select value={isPublicAccess ? "PUBLIC" : "RESTRICTED"} onValueChange={handlePublicToggle} disabled={isUpdatingAccess}>
+                  <SelectTrigger className="w-[140px] bg-white"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="RESTRICTED">Restricted</SelectItem>
                     <SelectItem value="PUBLIC">Anyone with link</SelectItem>
@@ -229,7 +230,7 @@ export const AddCollaborators = ({
             <ScrollArea className="h-[140px] w-full pr-4">
               <div className="flex flex-col gap-y-4">
                 {collaborators?.map((c) => (
-                  <div key={c.id} className="flex items-center justify-between">
+                  <div key={c.id} className="flex items-center justify-between group">
                     <div className="flex items-center gap-x-3 overflow-hidden">
                       <div className="size-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-semibold text-xs flex-shrink-0">
                         {c.user?.name?.[0] || c.user?.email?.[0] || "?"}
@@ -243,9 +244,28 @@ export const AddCollaborators = ({
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-x-2 text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-md uppercase tracking-tighter">
-                      <ShieldCheck className="size-3" />
-                      {c.userId === ownerId ? "OWNER" : c.role}
+                    
+                    <div className="flex items-center gap-x-2">
+                      <div className="flex items-center gap-x-2 text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-md uppercase tracking-tighter">
+                        <ShieldCheck className="size-3" />
+                        {c.userId === ownerId ? "OWNER" : c.role}
+                      </div>
+                      
+                      {c.userId !== ownerId && (
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="size-7 text-gray-400 hover:text-red-600 hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-opacity"
+                          disabled={isRemoving === c.userId}
+                          onClick={() => handleRemove(c.userId)}
+                        >
+                          {isRemoving === c.userId ? (
+                            <Loader2Icon className="size-3.5 animate-spin" />
+                          ) : (
+                            <XIcon className="size-4" />
+                          )}
+                        </Button>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -255,19 +275,12 @@ export const AddCollaborators = ({
         </div>
 
         <DialogFooter className="flex sm:justify-between items-center mt-2">
-          <Button 
-            type="button" 
-            variant="ghost" 
-            className="gap-x-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-            onClick={copyLink}
-          >
+          <Button type="button" variant="ghost" className="gap-x-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50" onClick={copyLink}>
             <LinkIcon className="size-4" />
             Copy link
           </Button>
           <DialogClose asChild>
-            <Button type="button" variant="secondary">
-              Done
-            </Button>
+            <Button type="button" variant="secondary">Done</Button>
           </DialogClose>
         </DialogFooter>
       </DialogContent>
