@@ -1,7 +1,7 @@
 import { Server } from 'socket.io';
 import { Server as HttpServer } from 'http';
 // @ts-ignore - Bypassing strict rootDir check for shared Prisma client
-import { prisma } from '../../src/lib/prisma';
+import { prisma } from "./lib/prisma";
 
 // Helper function to generate an infinite variety of vibrant colors
 const generateRandomColor = () => {
