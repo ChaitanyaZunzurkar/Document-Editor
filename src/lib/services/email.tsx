@@ -14,7 +14,7 @@ export async function sendInviteEmails(
   documentTitle: string = "Shared Document" 
 ) {
   try {
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://document-editor-nine.vercel.app";
     const documentLink = `${appUrl}/documents/${documentId}`;
 
     // 1. Set up the connection to your Gmail account mailroom

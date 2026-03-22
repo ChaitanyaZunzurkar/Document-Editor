@@ -6,7 +6,8 @@ export const useSocket = (documentId: string, userName: string, userId: string) 
     const [socket, setSocket] = useState<Socket | null>(null);
 
     useEffect(() => {
-        const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL || "http://localhost:3001";
+        const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL || "https://document-editor-collaborative-backend.onrender.com";
+        
         const newSocket = io(SOCKET_URL);
         
         setSocket(newSocket)
