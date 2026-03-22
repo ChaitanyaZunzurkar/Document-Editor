@@ -19,7 +19,8 @@ export const setupSocket = (httpServer: HttpServer) => {
     const io = new Server(httpServer, {
         cors: {
             origin: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
-            methods: ["GET", "POST"]
+            methods: ["GET", "POST"],
+            credentials: true
         },
         
         pingTimeout: 60000, // Wait 60s before closing dead connections
