@@ -18,7 +18,7 @@ export const setupSocket = (httpServer: HttpServer) => {
 
     const io = new Server(httpServer, {
         cors: {
-            origin: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
+            origin: process.env.FRONTEND_URL || "https://document-editor-nine.vercel.app",
             methods: ["GET", "POST"],
             credentials: true
         },

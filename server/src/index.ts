@@ -10,9 +10,13 @@ dotenv.config();
 const app = express();
 
 app.use(cors({
-    origin: process.env.FRONTEND_URL || "https://document-editor-nine.vercel.app", 
+    origin: process.env.FRONTEND_URL || "https://document-editor-nine.vercel.app",
     methods: ["GET", "POST"]
 }));
+
+app.get("/", (req, res) => {
+    res.send("Document Editor Socket Server is Live and Routing Traffic!");
+});
 
 const httpServer = createServer(app);
 
